@@ -8,13 +8,38 @@ internal class Program
 {
     private static void Main(string[] args)
     {
-        var mlservice = new ClusteringService();
+        //NaiveClusterizationMlNet();
+        TrigramClusterizationMlNet();
+    }
+
+    private static void NaiveClusterizationMlNet()
+    {
+        var mlservice = new ClusterNaive();
         var reader = new CsvTextDataReader();
         var records = reader.ReadTextData("Data\\sample-full.csv");
 
-        mlservice.ClusterizeSingleFieldDefault(records);
+        mlservice.ClusterizeSingleField10(records);
 
 
-        System.Console.WriteLine(JsonConvert.SerializeObject(records.OrderBy(x => x.ClusterId), Formatting.Indented));
+        var dictionary = records.GroupBy(x => x.ClusterId)
+            .ToDictionary(g => g.Key, g => g.ToList())
+            .OrderBy(x => x.Key);
+
+        File.WriteAllText("Data\\result.json", JsonConvert.SerializeObject(dictionary, Formatting.Indented));
+    }
+
+    private static void TrigramClusterizationMlNet()
+    {
+        var mlservice = new ClusterTrigramsService();
+        var reader = new CsvTextDataReader();
+        var records = reader.ReadTextData("Data\\sample-full.csv");
+
+        mlservice.ClusterizeSingleField10(records);
+
+        var dictionary = records.GroupBy(x => x.ClusterId)
+           .ToDictionary(g => g.Key, g => g.ToList())
+           .OrderBy(x => x.Key);
+
+        File.WriteAllText("Data\\result.json", JsonConvert.SerializeObject(dictionary, Formatting.Indented));
     }
 }
