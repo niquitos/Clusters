@@ -12,8 +12,9 @@ internal class Program
     {
         //NaiveClusterizationMlNet();
         //TrigramClusterizationMlNet();
-        CustomFeaturesClusterizationMlNet();
+        //CustomFeaturesClusterizationMlNet();
         //NaiveClusterizationAccord();
+        GmmClusterizationAccord();
     }
 
     private static void NaiveClusterizationMlNet()
@@ -62,13 +63,28 @@ internal class Program
         File.WriteAllText("Data\\result.json", JsonConvert.SerializeObject(dictionary, Formatting.Indented));
     }
 
-    private static void NaiveClusterizationAccord()
+    private static void KMeansClusterizationAccord()
     {
         var mlservice = new ClusterKMeansAccordService();
         var reader = new CsvTextDataReader();
         var records = reader.ReadTextData(DataPath, 0, 30000);
 
         mlservice.ClusterizeSingleField10(records);
+
+        var dictionary = records.GroupBy(x => x.ClusterId)
+            .ToDictionary(g => g.Key, g => g.ToList())
+            .OrderBy(x => x.Key);
+
+        File.WriteAllText("Data\\result.json", JsonConvert.SerializeObject(dictionary, Formatting.Indented));
+    }
+
+    private static void GmmClusterizationAccord()
+    {
+        var mlservice = new ClusterMeanShiftAccordService();
+        var reader = new CsvTextDataReader();
+        var records = reader.ReadTextData(DataPath, 0, 30000);
+
+        mlservice.ClusterizeSingleField(records);
 
         var dictionary = records.GroupBy(x => x.ClusterId)
             .ToDictionary(g => g.Key, g => g.ToList())

@@ -6,7 +6,6 @@ namespace Clusters.Accord;
 
 public class ClusterKMeansAccordService
 {
-
     public void ClusterizeSingleField10(EventModel[] events)
     {
         Clusterize(events, 10);
@@ -43,57 +42,10 @@ public class ClusterKMeansAccordService
     }
     private double[][] FeaturizeEvents(EventModel[] events)
     {
-        return events.Select(x => FeaturizationService.FeaturizeText(x.Text)).ToArray();
-    }
-}
-
-public class ClusterGaussianMixtureModelAccordService
-{
-
-    public void ClusterizeSingleField10(EventModel[] events)
-    {
-        Clusterize(events, 10);
+        return events.Select(x => FeaturizeText(x.Text)).ToArray();
     }
 
-    public void ClusterizeSingleField20(EventModel[] events)
-    {
-        Clusterize(events, 20);
-    }
-
-    public void ClusterizeSingleField30(EventModel[] events)
-    {
-        Clusterize(events, 30);
-    }
-
-    public void Featurize(EventModel[] events)
-    {
-        FeaturizeEvents(events);
-    }
-
-    private void Clusterize(EventModel[] events, int numberOfClusters)
-    {
-        var features = FeaturizeEvents(events);
-
-        var gmm = new GaussianMixtureModel(numberOfClusters);
-        var clusters = gmm.Learn(features);
-        int[] labels = clusters.Decide(features);
-
-        for (int i = 0; i < events.Length; i++)
-        {
-            events[i].ClusterId = (uint)labels[i];
-        }
-    }
-    private double[][] FeaturizeEvents(EventModel[] events)
-    {
-        return events.Select(x => FeaturizationService.FeaturizeText(x.Text)).ToArray();
-    }
-
-    
-}
-
-public static class FeaturizationService
-{
-    public static double[] FeaturizeText(string document, int vectorSize = 64)
+    private double[] FeaturizeText(string document, int vectorSize = 64)
     {
         var vector = new double[vectorSize];
         var trigrams = GetTrigrams(document);
@@ -107,14 +59,14 @@ public static class FeaturizationService
         return vector;
     }
 
-    private static string[] GetTrigrams(string? text)
+    private string[] GetTrigrams(string? text)
     {
         if (string.IsNullOrEmpty(text))
             return [];
 
-        var result = new string[text.Length - 2];
+        var result = new string[text.Length-2];
 
-        for (int i = 0; i < text.Length - 2; i++)
+        for (int i = 0; i < text.Length-2; i++)
         {
             result[i] = text.Substring(i, 3);
         }
