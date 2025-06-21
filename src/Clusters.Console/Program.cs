@@ -1,5 +1,7 @@
 ﻿using Clusters.Accord;
 using Clusters.Data.DataAccess;
+using Clusters.Distances;
+using Clusters.Hashing;
 using Clusters.ML.Net;
 using Newtonsoft.Json;
 
@@ -14,7 +16,10 @@ internal class Program
         //TrigramClusterizationMlNet();
         //CustomFeaturesClusterizationMlNet();
         //NaiveClusterizationAccord();
-        GmmClusterizationAccord();
+        //GmmClusterizationAccord();
+        //Fnv1aHashCollisions();
+        LevenshteinDistance();
+        System.Console.ReadKey();
     }
 
     private static void NaiveClusterizationMlNet()
@@ -91,5 +96,76 @@ internal class Program
             .OrderBy(x => x.Key);
 
         File.WriteAllText("Data\\result.json", JsonConvert.SerializeObject(dictionary, Formatting.Indented));
+    }
+
+    private static void Fnv1aHashCollisions()
+    {
+        const string Characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
+        "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" +
+        "0123456789" +
+        "!@#$%^&*()_+-=[]{}|;:'\",.<>/?" +
+        "\n\r\t\0";
+
+        var service = new TrigramHashingService();
+
+        var uniqueChars = Characters.Distinct().ToArray();
+        System.Console.WriteLine($"Unique characters: {uniqueChars.Length}");
+        System.Console.WriteLine($"Possible trigrams: {Math.Pow(uniqueChars.Length, 3):N0}");
+
+        // Generate all possible trigrams
+        var trigrams = GenerateAllTrigrams(uniqueChars);
+
+        // Compute hashes and check for collisions
+        var hashCounts = new Dictionary<ulong, List<string>>();
+        int collisions = 0;
+
+        foreach (var trigram in trigrams)
+        {
+            ulong hash = service.ComputeFnv1aUnsafeTrigramHash(trigram);
+
+            if (!hashCounts.ContainsKey(hash))
+            {
+                hashCounts.Add(hash, []);
+            }
+            else
+            {
+                collisions++;
+                System.Console.WriteLine($"Collision #{collisions}:");
+                System.Console.WriteLine($"  '{trigram}' (hash: {hash:X16})");
+                System.Console.WriteLine($"  Conflicts with: {string.Join(", ", hashCounts[hash])}");
+            }
+
+            hashCounts[hash].Add(trigram);
+        }
+
+        System.Console.WriteLine($"\nTotal collisions found: {collisions}");
+    }
+
+    private static IEnumerable<string> GenerateAllTrigrams(char[] chars)
+    {
+        for (int i = 0; i < chars.Length; i++)
+            for (int j = 0; j < chars.Length; j++)
+                for (int k = 0; k < chars.Length; k++)
+                    yield return new string(new[] { chars[i], chars[j], chars[k] });
+    }
+
+    private static void LevenshteinDistance()
+    {
+        const string cat = "cat";
+        const string cot = "cot";
+
+        const string msg = "brown fox jumps over the dog";
+        const string msg2 = "how far the path could go";
+
+        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistance(cat, cot));
+        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized(cat, cot));
+        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized_1(cat, cot));
+
+        System.Console.WriteLine("------------");
+
+        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistance(msg, msg2));
+        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized(msg, msg2));
+        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized_1(msg, msg2));
     }
 }
