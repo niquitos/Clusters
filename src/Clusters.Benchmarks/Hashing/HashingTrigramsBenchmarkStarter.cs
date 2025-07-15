@@ -1,44 +1,71 @@
-﻿using BenchmarkDotNet.Attributes;
-using Clusters.Hashing;
-using Service = Clusters.Hashing.TrigramHashingService;
+﻿using System.IO.Hashing;
+using System.Text;
+using BenchmarkDotNet.Attributes;
+using System.Security.Cryptography;
 
 namespace Clusters.Benchmarks.Hashing;
 
 [MemoryDiagnoser]
-public class HashingTrigramsBenchmarkStarter
+public class HashTrigramsBenchmark
 {
-    private readonly Service _service;
-    private const string Input = "abc";
 
-    public HashingTrigramsBenchmarkStarter()
+    [Benchmark]
+    public void GetHashCode_Algorithm()
     {
-        _service = new Service();
+        trigram.GetHashCode();
     }
 
     [Benchmark]
-    public void MD5() => _service.HashMD5(Input);
+    public void MD5_Algorithm()
+    {
+        HashMD5();
+    }
 
     [Benchmark]
-    public void Xx64() => _service.HashXx64(Input);
+    public void XxHash64_Algorithm()
+    {
+        HashXx64();
+    }
 
     [Benchmark]
-    public void Fnv1a_Simple() => _service.HashFnv1aSimple(Input);
+    public void Fnv1a_Algorithm()
+    {
+        Fnv1a();
+    }
 
-    [Benchmark]
-    public void Fnv1a_Simple_Trigram() => _service.HashFnv1aSimple(Input);
+    private const string trigram = "abc";
 
-    [Benchmark]
-    public void Fnv1a_Unsafe() => _service.HashFnv1aUnsafe(Input);
+    public byte[] HashMD5()
+    {
+        Span<byte> buffer = stackalloc byte[trigram.Length * 2];
+        Encoding.UTF8.GetBytes(trigram.AsSpan(), buffer);
 
-    [Benchmark]
-    public void Fnv1a_Simd() => _service.HashFnv1aText(Input);
+        var slice = buffer[..3];
+        return MD5.HashData(slice);
+    }
 
-    [Benchmark]
-    public void Fnv1a_Trigrams() => _service.HashFnv1aTrigram(Input);
+    public byte[] HashXx64()
+    {
+        Span<byte> buffer = stackalloc byte[trigram.Length * 2];
+        Encoding.UTF8.GetBytes(trigram.AsSpan(), buffer);
 
-    [Benchmark]
-    public void GetHashCode_Substrings() => _service.HashGetHashCodeSubstrings(Input);
+        var slice = buffer[..3];
+        return XxHash64.Hash(slice);
+    }
+    
+    private ulong Fnv1a()
+    {
+        const ulong offsetBasis = 14695981039346656037;
+        const ulong prime = 1099511628211;
 
-    [Benchmark]
-    public void GetHashCode_Spans() => _service.HashGetHashCodeSpans(Input);
+        var hash = offsetBasis;
+
+        for (int i = 0; i < trigram.Length; i++)
+        {
+            hash ^= trigram[i];
+            hash *= prime;
+        }
+
+        return hash;
+    }
 }

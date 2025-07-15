@@ -104,7 +104,7 @@ public class HashingService
                 }
             }
 
-            // Process remaining characters
+            // Process remaining characters (if any)
             while (ptr < end)
             {
                 hash ^= *ptr;
