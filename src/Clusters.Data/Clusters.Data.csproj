@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Data\sample-full.csv">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Content Include="Data\sample-full.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

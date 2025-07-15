@@ -1,15 +1,20 @@
 ﻿using Clusters.Accord;
+using Clusters.Clusterization;
 using Clusters.Data.DataAccess;
 using Clusters.Distances;
 using Clusters.Hashing;
 using Clusters.ML.Net;
 using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace Clusters.Console;
 
 internal class Program
 {
-    private const string DataPath = "Data\\sample-full.csv";
+    private static string Directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+    private static string DataPath => Path.Combine(Directory, "Data\\sample-full.csv");
+
     private static void Main(string[] args)
     {
         //NaiveClusterizationMlNet();
@@ -18,8 +23,60 @@ internal class Program
         //NaiveClusterizationAccord();
         //GmmClusterizationAccord();
         //Fnv1aHashCollisions();
-        LevenshteinDistance();
-        System.Console.ReadKey();
+        //LevenshteinDistance();
+        //DbscanClassic();
+        DbscanBitArray();
+        //System.Console.ReadKey();
+    }
+
+    private static void DbscanBitArray()
+    {
+        var reader = new CsvTextDataReader();
+
+        var records = reader.ReadTextData(DataPath, 0, 30_000).ToList();
+
+        Parallel.ForEach(records, @event =>
+        {
+            @event.SimHash = SimHashService.DoSimd(@event.Text!);
+        });
+
+        var stopwatch = Stopwatch.StartNew();
+        DbscanBitArrayService.Clusterize([.. records]);
+        stopwatch.Stop();
+
+        System.Console.WriteLine($"Iteration: {1}, Clusterization took {(double)stopwatch.ElapsedMilliseconds / 1_000} s");
+
+
+        var dictionary = records.GroupBy(x => x.ClusterId)
+            .ToDictionary(g => g.Key, g => g.ToList())
+            .OrderBy(x => x.Key);
+
+        File.WriteAllText(Path.Combine(Directory, "Data\\result.json"), JsonConvert.SerializeObject(dictionary, Formatting.Indented));
+    }
+
+    private static void DbscanClassic()
+    {
+        var reader = new CsvTextDataReader();
+
+        var records = reader.ReadTextData(DataPath, 0, 30_000).ToList();
+
+        Parallel.ForEach(records, @event =>
+        {
+            @event.SimHash = SimHashService.DoSimd(@event.Text!);
+        });
+
+        var stopwatch = Stopwatch.StartNew();
+        DbscanClassicService.Clusterize(records);
+        stopwatch.Stop();
+
+        System.Console.WriteLine($"Iteration: {1}, Clusterization took {(double)stopwatch.ElapsedMilliseconds / 1_000} s");
+
+
+        var dictionary = records.GroupBy(x => x.ClusterId)
+            .ToDictionary(g => g.Key, g => g.ToList())
+            .OrderBy(x => x.Key);
+
+        File.WriteAllText(Path.Combine(Directory, "Data\\result.json"), JsonConvert.SerializeObject(dictionary, Formatting.Indented));
     }
 
     private static void NaiveClusterizationMlNet()

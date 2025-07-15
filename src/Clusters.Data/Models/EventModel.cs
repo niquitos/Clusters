@@ -10,4 +10,5 @@ public class EventModel
 
 
     public uint ClusterId { get; set; }
+    public ulong SimHash{ get; set; }
 }

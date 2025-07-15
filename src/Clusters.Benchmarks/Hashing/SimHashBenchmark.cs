@@ -7,21 +7,21 @@ namespace Clusters.Benchmarks.Hashing;
 public class SimHashBenchmark
 {
 
-    [Benchmark]
-    public void Simple()
-    {
-        SimHashService.DoSimple();
-    }
+    // [Benchmark]
+    // public void Simple()
+    // {
+    //     SimHashService.DoSimple();
+    // }
 
-    [Benchmark]
-    public void Unrolled()
-    {
-        SimHashService.DoUnrolled();
-    }
+    // [Benchmark]
+    // public void Unrolled()
+    // {
+    //     SimHashService.DoUnrolled();
+    // }
 
     [Benchmark]
     public void Simd()
     {
-        SimHashService.DoSimd();
+        SimHashService.DoSimd(StringHelper.AllSymbolsInput);
     }
 }

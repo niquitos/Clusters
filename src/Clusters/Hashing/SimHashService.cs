@@ -126,10 +126,10 @@ public static class SimHashService
         return simhash;
     }
 
-    public static unsafe ulong DoSimd()
+    public static unsafe ulong DoSimd(string text)
     {
         Span<int> shingle = stackalloc int[64];
-        var span = StringHelper.AllSymbolsInput.AsSpan();
+        var span = text.AsSpan();
 
         if (!Sse2.IsSupported)
             throw new PlatformNotSupportedException("SSE2 is not supported on this platform.");
@@ -169,7 +169,7 @@ public static class SimHashService
         ulong simhash = 0L;
         for (var i = 0; i < 64; i++)
         {
-            if (shingle[i] > 0)
+            if (shingle[i] > -1)
             {
                 simhash |= 1UL << i;
             }
