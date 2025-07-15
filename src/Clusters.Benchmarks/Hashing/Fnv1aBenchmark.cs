@@ -24,7 +24,7 @@ public class Fnv1aBenchmark
     [Benchmark]
     public void Unsafe()
     {
-        Fnv1aUnrolled();
+        Fnv1aUnsafe();
     }
 
     [Benchmark]
@@ -34,11 +34,11 @@ public class Fnv1aBenchmark
     }
 
     private const string trigram = "abc";
+    const ulong offsetBasis = 14695981039346656037;
+    const ulong prime = 1099511628211;
+
     private ulong Fnv1aSimple()
     {
-        const ulong offsetBasis = 14695981039346656037;
-        const ulong prime = 1099511628211;
-
         var hash = offsetBasis;
 
         for (int i = 0; i < trigram.Length; i++)
@@ -52,9 +52,6 @@ public class Fnv1aBenchmark
 
     private ulong Fnv1aUnrolled()
     {
-        const ulong offsetBasis = 14695981039346656037;
-        const ulong prime = 1099511628211;
-
         var hash = offsetBasis;
 
         hash ^= trigram[0];
@@ -71,9 +68,6 @@ public class Fnv1aBenchmark
 
     public unsafe ulong Fnv1aUnsafe()
     {
-        const ulong offsetBasis = 14695981039346656037;
-        const ulong prime = 1099511628211;
-
         ulong hash = offsetBasis;
 
         fixed (char* start = trigram)
@@ -93,9 +87,6 @@ public class Fnv1aBenchmark
     }
     public unsafe ulong Fnv1aSimd()
     {
-        const ulong offsetBasis = 14695981039346656037;
-        const ulong prime = 1099511628211;
-
         var hash = offsetBasis;
 
         fixed (char* start = trigram)
