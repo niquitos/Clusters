@@ -19,7 +19,7 @@ public class TrigramHashingService : HashingService
     {
         Span<byte> buffer = stackalloc byte[input.Length * 2];
         Encoding.UTF8.GetBytes(input.AsSpan(), buffer);
-
+        
         var slice = buffer[..3];
         var hashCode = XxHash64.Hash(slice);
     }

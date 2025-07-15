@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Clusters.Hashing;
 using Service = Clusters.Hashing.TrigramHashingService;
 
 namespace Clusters.Benchmarks.Hashing;
@@ -7,11 +8,7 @@ namespace Clusters.Benchmarks.Hashing;
 public class HashingTrigramsBenchmarkStarter
 {
     private readonly Service _service;
-    private const string Input = "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz" +
-    "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя" +
-    "0123456789" +
-    "!@#$%^&*()_+-=[]{}|;:'\",.<>/?" +
-    "\n\r\t\0";
+    private const string Input = "abc";
 
     public HashingTrigramsBenchmarkStarter()
     {
