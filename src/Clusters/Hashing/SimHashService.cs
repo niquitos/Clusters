@@ -5,8 +5,8 @@ namespace Clusters.Hashing;
 
 public static class SimHashService
 {
-    const ulong offsetBasis = 14695981039346656037;
-    const ulong prime = 1099511628211;
+    private const ulong offsetBasis = 14695981039346656037;
+    private const ulong prime = 1099511628211;
 
     public static ulong DoSimple()
     {
@@ -20,7 +20,7 @@ public static class SimHashService
 
             for (var j = 0; j < 64; j++)
             {
-                var bit1 = (hashCode & 1UL << j) != 0;
+                var bit1 = (hashCode & (1UL << j)) != 0;
 
                 shingle[j] += bit1 ? 1 : -1;
             }
@@ -139,111 +139,175 @@ public static class SimHashService
         Span<int> shingles = stackalloc int[64];
         var span = text.AsSpan();
 
-        if (Avx2.IsSupported)
-            return AvxSimd(shingles, span);
-
-        if (Sse2.IsSupported)
-            return Sse2Simd(shingles, span);
-
-
-        throw new NotSupportedException("no supported platform found");
+        return Avx2.IsSupported ? ComputeAvx(shingles, span) : throw new NotSupportedException("no supported platform found");
     }
 
-    private static unsafe ulong Sse2Simd(Span<int> shingle, ReadOnlySpan<char> span)
+    public static unsafe ulong DoSimdSimpler(string input)
     {
-        for (var i = 0; i < span.Length - 2; i++)
+        if (input is null)
+            return 0;
+
+        var text = input.Trim();
+
+        if (text.Length == 0)
+            return 0;
+
+        Span<int> shingles = stackalloc int[64];
+        var span = text.AsSpan();
+
+        return Avx2.IsSupported ? ComputeAvxMultipletrigrams(shingles, span) : throw new NotSupportedException("no supported platform found");
+    }
+
+    private static unsafe ulong ComputeAvx(Span<int> shingle, ReadOnlySpan<char> span)
+    {
+        const int batchSize = 8;
+
+        Span<Vector256<int>> accumulators = stackalloc Vector256<int>[batchSize];
+        for (int i = 0; i < batchSize; i++)
+        {
+            accumulators[i] = Vector256<int>.Zero;
+        }
+
+        for (int i = 0; i < span.Length - 2; i++)
         {
             var slice = span.Slice(i, 3);
             var hashCode = ComputeFnv1aHash(slice);
 
-            for (var j = 0; j < 64; j += 4)
+            for (var j = 0; j < batchSize; j++)
             {
-                var mask = Vector128.Create(
-                    1U << j,
-                    1U << (j + 1),
-                    1U << (j + 2),
-                    1U << (j + 3)
+                var bits = (hashCode >> (j * batchSize)) & 0xFF;
+                Vector256<int> bitMask = Vector256.Create(
+                    (int)((bits >> 0) & 1),
+                    (int)((bits >> 1) & 1),
+                    (int)((bits >> 2) & 1),
+                    (int)((bits >> 3) & 1),
+                    (int)((bits >> 4) & 1),
+                    (int)((bits >> 5) & 1),
+                    (int)((bits >> 6) & 1),
+                    (int)((bits >> 7) & 1)
                 );
 
-                var hashVec = Vector128.Create((uint)hashCode);
-                var bits = Sse2.And(hashVec, mask);
+                var update = Avx2.Subtract(Avx2.ShiftLeftLogical(bitMask, 1), Vector256<int>.One);
 
-                var bitValues = Sse2.CompareEqual(bits, mask);
-
-                var votes = Vector128.ConditionalSelect(
-                    Sse2.CompareEqual(bitValues, Vector128<uint>.Zero).AsInt32(),
-                    Vector128.Create(-1),
-                    Vector128.Create(1)
-                );
-
-                fixed (int* ptr = &shingle[j])
-                {
-                    Sse2.Store(ptr, votes);
-                }
+                accumulators[j] = Avx2.Add(accumulators[j], update);
             }
         }
 
-        ulong simhash = 0L;
-        
+        for (var i = 0; i < batchSize; i++)
+        {
+            for (var j = 0; j < batchSize; j++)
+            {
+                var bitPos = (i * batchSize) + j;
+
+                shingle[bitPos] += accumulators[i].GetElement(j);
+            }
+        }
+
+        var simhash = 0UL;
         for (var i = 0; i < 64; i++)
         {
-            if (shingle[i] > -1)
+            if (shingle[i] > 0)
             {
                 simhash |= 1UL << i;
             }
         }
-
         return simhash;
     }
 
-    private static unsafe ulong AvxSimd(Span<int> shingle, ReadOnlySpan<char> span)
+    private static unsafe ulong ComputeAvxMultipletrigrams(Span<int> shingle, ReadOnlySpan<char> span)
     {
-        for (var i = 0; i < span.Length - 2; i++)
+        const int batchSize = 8;
+        const int trigramsPerBatch = 4;
+
+        Span<Vector256<int>> accumulators = stackalloc Vector256<int>[batchSize];
+        for (int i = 0; i < batchSize; i++)
         {
-            var slice = span.Slice(i, 3);
-            var hashCode = ComputeFnv1aHash(slice);
+            accumulators[i] = Vector256<int>.Zero;
+        }
 
-            for (var j = 0; j < 64; j += 8)
+        var index = 0;
+        for (; index < span.Length - 2 - trigramsPerBatch; index += trigramsPerBatch)
+        {
+            var slice1 = span.Slice(index + 0, 3);
+            var slice2 = span.Slice(index + 1, 3);
+            var slice3 = span.Slice(index + 2, 3);
+            var slice4 = span.Slice(index + 3, 3);
+
+            var hash1 = ComputeFnv1aHash(slice1);
+            var hash2 = ComputeFnv1aHash(slice2);
+            var hash3 = ComputeFnv1aHash(slice3);
+            var hash4 = ComputeFnv1aHash(slice4);
+
+            for (var i = 0; i < batchSize; i++)
             {
-                var mask = Vector256.Create(
-                    1U << j,
-                    1U << (j + 1),
-                    1U << (j + 2),
-                    1U << (j + 3),
-                    1U << (j + 4),
-                    1U << (j + 5),
-                    1U << (j + 6),
-                    1U << (j + 7)
+                var bitMask0 = CreateBitMask(hash1, i);
+                var bitMask1 = CreateBitMask(hash2, i);
+                var bitMask2 = CreateBitMask(hash3, i);
+                var bitMask3 = CreateBitMask(hash4, i);
+
+                var combinedMask = Avx2.Add(
+                    Avx2.Add(bitMask0, bitMask1),
+                    Avx2.Add(bitMask2, bitMask3)
                 );
 
-                var hashVec = Vector256.Create((uint)hashCode);
-                var bits = Avx2.And(hashVec, mask);
+                var update = Avx2.Subtract(Avx2.ShiftLeftLogical(combinedMask, 1),
+                    Vector256.Create(trigramsPerBatch));
 
-                var bitValues = Avx2.CompareEqual(bits, mask);
-
-                var votes = Vector256.ConditionalSelect(
-                    Avx2.CompareEqual(bitValues, Vector256<uint>.Zero).AsInt32(),
-                    Vector256.Create(-1),
-                    Vector256.Create(1)
-                );
-
-                fixed (int* ptr = &shingle[j])
-                {
-                    Avx.Store(ptr, votes);
-                }
+                accumulators[i] = Avx2.Add(accumulators[i], update);
             }
         }
 
-        ulong simhash = 0L;
+        for (; index < span.Length - 2; index++)
+        {
+            var slice = span.Slice(index, 3);
+            var hashCode = ComputeFnv1aHash(slice);
+
+            for (var i = 0; i < batchSize; i++)
+            {
+                var bits = (hashCode >> (i * batchSize)) & 0xFF;
+                var bitMask = CreateBitMask(hashCode, i);
+
+                var update = Avx2.Subtract(Avx2.ShiftLeftLogical(bitMask, 1), Vector256<int>.One);
+
+                accumulators[i] = Avx2.Add(accumulators[i], update);
+            }
+        }
+
+        // Final accumulation into shingle
+        for (var i = 0; i < batchSize; i++)
+        {
+            for (var j = 0; j < batchSize; j++)
+            {
+                var bitPos = (i * batchSize) + j;
+
+                shingle[bitPos] += accumulators[i].GetElement(j);
+            }
+        }
+
+        var simhash = 0UL;
         for (var i = 0; i < 64; i++)
         {
-            if (shingle[i] > -1)
+            if (shingle[i] > 0)
             {
                 simhash |= 1UL << i;
             }
         }
-
         return simhash;
+    }
+
+    private static Vector256<int> CreateBitMask(ulong hashCode, int j)
+    {
+        var bits = (hashCode >> (j * 8)) & 0xFF;
+        return Vector256.Create(
+            (int)((bits >> 0) & 1),
+            (int)((bits >> 1) & 1),
+            (int)((bits >> 2) & 1),
+            (int)((bits >> 3) & 1),
+            (int)((bits >> 4) & 1),
+            (int)((bits >> 5) & 1),
+            (int)((bits >> 6) & 1),
+            (int)((bits >> 7) & 1)
+        );
     }
 
     private static ulong ComputeFnv1aHash(ReadOnlySpan<char> trigram)

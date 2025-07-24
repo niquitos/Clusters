@@ -24,9 +24,21 @@ internal class Program
         //GmmClusterizationAccord();
         //Fnv1aHashCollisions();
         //LevenshteinDistance();
-        RunDbScanClassic();
-        RunDbScanTest();
+        //RunDbScanClassic();
+        //RunDbScanTest();
+        SimHash();
         //System.Console.ReadKey();
+    }
+
+    private static void SimHash()
+    {
+        var simple = SimHashService.DoSimple();
+        var unrolledhash = SimHashService.DoSimd(StringHelper.AllSymbolsInput);
+        var simdhash = SimHashService.DoSimdSimpler(StringHelper.AllSymbolsInput);
+
+        System.Console.WriteLine(simple);
+        System.Console.WriteLine(unrolledhash);
+        System.Console.WriteLine(simdhash);
     }
 
     private static void RunDbScanTest()
