@@ -160,13 +160,13 @@ public static class SimHashService
 
     private static unsafe ulong ComputeAvx(Span<int> shingle, ReadOnlySpan<char> span)
     {
-        const int batchSize = 8;
+        var batchSize = Vector256<int>.Count;
 
         Span<Vector256<int>> accumulators = stackalloc Vector256<int>[batchSize];
-        for (int i = 0; i < batchSize; i++)
-        {
-            accumulators[i] = Vector256<int>.Zero;
-        }
+        //for (int i = 0; i < batchSize; i++)
+        //{
+        //    accumulators[i] = Vector256<int>.Zero;
+        //}
 
         for (int i = 0; i < span.Length - 2; i++)
         {
@@ -175,7 +175,7 @@ public static class SimHashService
 
             for (var j = 0; j < batchSize; j++)
             {
-                var bits = (hashCode >> (j * batchSize)) & 0xFF;
+                var bits = (hashCode >> (j * batchSize)) & 0b11111111;
                 Vector256<int> bitMask = Vector256.Create(
                     (int)((bits >> 0) & 1),
                     (int)((bits >> 1) & 1),
@@ -216,14 +216,14 @@ public static class SimHashService
 
     private static unsafe ulong ComputeAvxMultipletrigrams(Span<int> shingle, ReadOnlySpan<char> span)
     {
-        const int batchSize = 8;
+        int batchSize = Vector256<int>.Count;
         const int trigramsPerBatch = 4;
 
         Span<Vector256<int>> accumulators = stackalloc Vector256<int>[batchSize];
-        for (int i = 0; i < batchSize; i++)
-        {
-            accumulators[i] = Vector256<int>.Zero;
-        }
+        //for (int i = 0; i < batchSize; i++)
+        //{
+        //    accumulators[i] = Vector256<int>.Zero;
+        //}
 
         var index = 0;
         for (; index < span.Length - 2 - trigramsPerBatch; index += trigramsPerBatch)
@@ -264,7 +264,6 @@ public static class SimHashService
 
             for (var i = 0; i < batchSize; i++)
             {
-                var bits = (hashCode >> (i * batchSize)) & 0xFF;
                 var bitMask = CreateBitMask(hashCode, i);
 
                 var update = Avx2.Subtract(Avx2.ShiftLeftLogical(bitMask, 1), Vector256<int>.One);
@@ -273,7 +272,6 @@ public static class SimHashService
             }
         }
 
-        // Final accumulation into shingle
         for (var i = 0; i < batchSize; i++)
         {
             for (var j = 0; j < batchSize; j++)
@@ -297,7 +295,7 @@ public static class SimHashService
 
     private static Vector256<int> CreateBitMask(ulong hashCode, int j)
     {
-        var bits = (hashCode >> (j * 8)) & 0xFF;
+        var bits = (hashCode >> (j * 8)) & 0b11111111;
         return Vector256.Create(
             (int)((bits >> 0) & 1),
             (int)((bits >> 1) & 1),
