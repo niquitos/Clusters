@@ -1,7 +1,6 @@
 ﻿using System.IO.Hashing;
 using System.Text;
 using BenchmarkDotNet.Attributes;
-using System.Security.Cryptography;
 
 namespace Clusters.Benchmarks.Hashing;
 
@@ -12,13 +11,7 @@ public class HashTrigramsBenchmark
     [Benchmark]
     public void GetHashCode_Algorithm()
     {
-        trigram.GetHashCode();
-    }
-
-    [Benchmark]
-    public void MD5_Algorithm()
-    {
-        HashMD5();
+        GetGetHashCode();
     }
 
     [Benchmark]
@@ -35,24 +28,23 @@ public class HashTrigramsBenchmark
 
     private const string trigram = "abc";
 
-    public byte[] HashMD5()
+    public ulong HashXx64()
     {
         Span<byte> buffer = stackalloc byte[trigram.Length * 2];
         Encoding.UTF8.GetBytes(trigram.AsSpan(), buffer);
 
         var slice = buffer[..3];
-        return MD5.HashData(slice);
+        return XxHash64.HashToUInt64(slice);
     }
 
-    public byte[] HashXx64()
+    private ulong GetGetHashCode()
     {
-        Span<byte> buffer = stackalloc byte[trigram.Length * 2];
-        Encoding.UTF8.GetBytes(trigram.AsSpan(), buffer);
+        var hash1 = trigram.GetHashCode();
+        var hash2 = hash1 ^ 0x7a3C14F6;
 
-        var slice = buffer[..3];
-        return XxHash64.Hash(slice);
+        return ((ulong)(uint)hash1<<32) | (uint)hash2;
     }
-    
+
     private ulong Fnv1a()
     {
         const ulong offsetBasis = 14695981039346656037;
