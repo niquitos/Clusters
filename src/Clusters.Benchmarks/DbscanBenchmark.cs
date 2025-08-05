@@ -32,7 +32,7 @@ public class DbscanBenchmark
     }
 
 
-    [Benchmark]
+    //[Benchmark]
     public void Classic()
     {
         DbscanClassic.Clusterize([.. _records]);
@@ -60,6 +60,12 @@ public class DbscanBenchmark
     public void No_Recursion()
     {
         DbscanNoRecursion.Clusterize([.. _records]);
+    }
+
+    [Benchmark]
+    public void Split()
+    {
+        DbscanSplit2.Clusterize([.. _records]);
     }
 
     //[Benchmark]

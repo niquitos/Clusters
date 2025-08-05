@@ -2,6 +2,7 @@
 using Microsoft.ML;
 using Microsoft.ML.Data;
 using Microsoft.ML.Trainers;
+using Microsoft.ML.Transforms;
 
 namespace Clusters.ML.Net;
 
@@ -31,17 +32,8 @@ public class ClusterCustomMapping
     private void Cluster(MLContext mlContext, EventModel[] events, int numberOfClusters)
     {
         var dataView = mlContext.Data.LoadFromEnumerable(events);
-
-        var schema = SchemaDefinition.Create(typeof(OutputModel));
-        schema["Features"].ColumnType = new VectorDataViewType(NumberDataViewType.Single, 64);
-
-        var custom = mlContext.Transforms.CustomMapping<EventModel, OutputModel>(
-            (input, output) =>
-            {
-                output.Features = FeaturizeText(input.Text);
-            }, 
-            "customMapping", 
-            outputSchemaDefinition: schema);
+        
+        var custom = CreateCustomTransformer(mlContext);
 
         var clusterization = mlContext.Clustering.Trainers.KMeans(
             new KMeansTrainer.Options
@@ -64,33 +56,32 @@ public class ClusterCustomMapping
         }
     }
 
-    private static float[] FeaturizeText(string text, int vectorSize = 64)
+    private static CustomMappingEstimator<EventModel, OutputModel> CreateCustomTransformer(MLContext mlContext)
     {
-        var vector = new float[vectorSize];
-        var trigrams = GetTrigrams(text);
+        var schema = SchemaDefinition.Create(typeof(OutputModel));
+        schema["Features"].ColumnType = new VectorDataViewType(NumberDataViewType.Single, 64);
 
-        foreach (var trigram in trigrams)
-        {
-            int index = Math.Abs(trigram.GetHashCode()) % vectorSize;
-            vector[index]++;
-        }
-
-        return vector;
+        return mlContext.Transforms.CustomMapping<EventModel, OutputModel>(
+            (input, output) =>output.Features = FeaturizeText(input.Text!),
+            "customMapping",
+            outputSchemaDefinition: schema);
     }
 
-    private static string[] GetTrigrams(string? text)
+    private static float[] FeaturizeText(string text, int vectorSize = 64)
     {
         if (string.IsNullOrEmpty(text))
             return [];
 
-        var result = new string[text.Length - 2];
+        var vector = new float[vectorSize];
 
         for (int i = 0; i < text.Length - 2; i++)
         {
-            result[i] = text.Substring(i, 3);
+            var trigram = text.Substring(i, 3);
+            var index = Math.Abs(trigram.GetHashCode()) % vectorSize;
+            vector[index]++;
         }
 
-        return result;
+        return vector;
     }
 }
 

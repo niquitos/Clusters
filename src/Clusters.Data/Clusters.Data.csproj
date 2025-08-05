@@ -16,4 +16,10 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\sample-100.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

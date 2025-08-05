@@ -1,5 +1,7 @@
+using System.IO.Hashing;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using System.Text;
 
 namespace Clusters.Hashing;
 
@@ -7,6 +9,8 @@ public static class SimHashService
 {
     private const ulong offsetBasis = 14695981039346656037;
     private const ulong prime = 1099511628211;
+
+    private static HashSet<char> _delimeters = [' ', '\\', '/', '@', '"', '.', '|'];
 
     public static ulong DoSimple()
     {
@@ -23,6 +27,150 @@ public static class SimHashService
                 var bit1 = (hashCode & (1UL << j)) != 0;
 
                 shingle[j] += bit1 ? 1 : -1;
+            }
+        }
+
+        ulong simhash = 0L;
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash |= 1UL << i;
+            }
+        }
+
+        return simhash;
+    }
+
+    public static ulong DoBitHack()
+    {
+        Span<int> shingle = stackalloc int[64];
+        var span = StringHelper.AllSymbolsInput.AsSpan();
+
+        for (var i = 0; i < span.Length - 2; i++)
+        {
+            var slice = span.Slice(i, 3);
+            var hashCode = ComputeFnv1aHash(slice);
+
+            for (var j = 0; j < 64; j++)
+            {
+                shingle[j] += ((int)((hashCode >> j) & 1) * 2) - 1;
+            }
+        }
+
+        ulong simhash = 0L;
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash |= 1UL << i;
+            }
+        }
+
+        return simhash;
+    }
+
+    public static ulong DoBitHackUnrolled()
+    {
+        Span<int> shingle = stackalloc int[64];
+        var span = StringHelper.AllSymbolsInput.AsSpan();
+
+        for (var i = 0; i < span.Length - 2; i++)
+        {
+            var slice = span.Slice(i, 3);
+            var hashCode = ComputeFnv1aHash(slice);
+
+            shingle[0] += ((int)((hashCode >> 0) & 1) * 2) - 1;
+            shingle[1] += ((int)((hashCode >> 1) & 1) * 2) - 1;
+            shingle[2] += ((int)((hashCode >> 2) & 1) * 2) - 1;
+            shingle[3] += ((int)((hashCode >> 3) & 1) * 2) - 1;
+            shingle[4] += ((int)((hashCode >> 4) & 1) * 2) - 1;
+            shingle[5] += ((int)((hashCode >> 5) & 1) * 2) - 1;
+            shingle[6] += ((int)((hashCode >> 6) & 1) * 2) - 1;
+            shingle[7] += ((int)((hashCode >> 7) & 1) * 2) - 1;
+            shingle[8] += ((int)((hashCode >> 8) & 1) * 2) - 1;
+            shingle[9] += ((int)((hashCode >> 9) & 1) * 2) - 1;
+            shingle[10] += ((int)((hashCode >> 10) & 1) * 2) - 1;
+            shingle[11] += ((int)((hashCode >> 11) & 1) * 2) - 1;
+            shingle[12] += ((int)((hashCode >> 12) & 1) * 2) - 1;
+            shingle[13] += ((int)((hashCode >> 13) & 1) * 2) - 1;
+            shingle[14] += ((int)((hashCode >> 14) & 1) * 2) - 1;
+            shingle[15] += ((int)((hashCode >> 15) & 1) * 2) - 1;
+            shingle[16] += ((int)((hashCode >> 16) & 1) * 2) - 1;
+            shingle[17] += ((int)((hashCode >> 17) & 1) * 2) - 1;
+            shingle[18] += ((int)((hashCode >> 18) & 1) * 2) - 1;
+            shingle[19] += ((int)((hashCode >> 19) & 1) * 2) - 1;
+            shingle[20] += ((int)((hashCode >> 20) & 1) * 2) - 1;
+            shingle[21] += ((int)((hashCode >> 21) & 1) * 2) - 1;
+            shingle[22] += ((int)((hashCode >> 22) & 1) * 2) - 1;
+            shingle[23] += ((int)((hashCode >> 23) & 1) * 2) - 1;
+            shingle[24] += ((int)((hashCode >> 24) & 1) * 2) - 1;
+            shingle[25] += ((int)((hashCode >> 25) & 1) * 2) - 1;
+            shingle[26] += ((int)((hashCode >> 26) & 1) * 2) - 1;
+            shingle[27] += ((int)((hashCode >> 27) & 1) * 2) - 1;
+            shingle[28] += ((int)((hashCode >> 28) & 1) * 2) - 1;
+            shingle[29] += ((int)((hashCode >> 29) & 1) * 2) - 1;
+            shingle[30] += ((int)((hashCode >> 30) & 1) * 2) - 1;
+            shingle[31] += ((int)((hashCode >> 31) & 1) * 2) - 1;
+            shingle[32] += ((int)((hashCode >> 32) & 1) * 2) - 1;
+            shingle[33] += ((int)((hashCode >> 33) & 1) * 2) - 1;
+            shingle[34] += ((int)((hashCode >> 34) & 1) * 2) - 1;
+            shingle[35] += ((int)((hashCode >> 35) & 1) * 2) - 1;
+            shingle[36] += ((int)((hashCode >> 36) & 1) * 2) - 1;
+            shingle[37] += ((int)((hashCode >> 37) & 1) * 2) - 1;
+            shingle[38] += ((int)((hashCode >> 38) & 1) * 2) - 1;
+            shingle[39] += ((int)((hashCode >> 39) & 1) * 2) - 1;
+            shingle[40] += ((int)((hashCode >> 40) & 1) * 2) - 1;
+            shingle[41] += ((int)((hashCode >> 41) & 1) * 2) - 1;
+            shingle[42] += ((int)((hashCode >> 42) & 1) * 2) - 1;
+            shingle[43] += ((int)((hashCode >> 43) & 1) * 2) - 1;
+            shingle[44] += ((int)((hashCode >> 44) & 1) * 2) - 1;
+            shingle[45] += ((int)((hashCode >> 45) & 1) * 2) - 1;
+            shingle[46] += ((int)((hashCode >> 46) & 1) * 2) - 1;
+            shingle[47] += ((int)((hashCode >> 47) & 1) * 2) - 1;
+            shingle[48] += ((int)((hashCode >> 48) & 1) * 2) - 1;
+            shingle[49] += ((int)((hashCode >> 49) & 1) * 2) - 1;
+            shingle[50] += ((int)((hashCode >> 50) & 1) * 2) - 1;
+            shingle[51] += ((int)((hashCode >> 51) & 1) * 2) - 1;
+            shingle[52] += ((int)((hashCode >> 52) & 1) * 2) - 1;
+            shingle[53] += ((int)((hashCode >> 53) & 1) * 2) - 1;
+            shingle[54] += ((int)((hashCode >> 54) & 1) * 2) - 1;
+            shingle[55] += ((int)((hashCode >> 55) & 1) * 2) - 1;
+            shingle[56] += ((int)((hashCode >> 56) & 1) * 2) - 1;
+            shingle[57] += ((int)((hashCode >> 57) & 1) * 2) - 1;
+            shingle[58] += ((int)((hashCode >> 58) & 1) * 2) - 1;
+            shingle[59] += ((int)((hashCode >> 59) & 1) * 2) - 1;
+            shingle[60] += ((int)((hashCode >> 60) & 1) * 2) - 1;
+            shingle[61] += ((int)((hashCode >> 61) & 1) * 2) - 1;
+            shingle[62] += ((int)((hashCode >> 62) & 1) * 2) - 1;
+            shingle[63] += ((int)((hashCode >> 63) & 1) * 2) - 1;
+        }
+
+        ulong simhash = 0L;
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash |= 1UL << i;
+            }
+        }
+
+        return simhash;
+    }
+
+    public static ulong DoBitHackNonOverlapping()
+    {
+        Span<int> shingle = stackalloc int[64];
+        var span = StringHelper.AllSymbolsInput.AsSpan();
+
+        for (var i = 0; i < span.Length - 2; i += 3)
+        {
+            var slice = span.Slice(i, 3);
+            var hashCode = ComputeFnv1aHash(slice);
+
+            for (var j = 0; j < 64; j++)
+            {
+                shingle[j] += ((int)((hashCode >> j) & 1) * 2) - 1;
             }
         }
 
@@ -162,11 +310,7 @@ public static class SimHashService
     {
         var batchSize = Vector256<int>.Count;
 
-        Span<Vector256<int>> accumulators = stackalloc Vector256<int>[batchSize];
-        //for (int i = 0; i < batchSize; i++)
-        //{
-        //    accumulators[i] = Vector256<int>.Zero;
-        //}
+        var accumulators = stackalloc Vector256<int>[batchSize];
 
         for (int i = 0; i < span.Length - 2; i++)
         {
@@ -323,4 +467,91 @@ public static class SimHashService
 
         return hash;
     }
+
+    public static ulong BitHackSplit(string input)
+    {
+        Span<int> shingle = stackalloc int[64];
+
+        char[] delimiters = { ' ', '\\', '/', '@', '"', '.', '|' };
+        var tokens = input.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var token in tokens)
+        {
+            var hashCode = ComputeFnv1aHash2(token.AsSpan());
+
+            for (var j = 0; j < 64; j++)
+            {
+                shingle[j] += ((int)((hashCode >> j) & 1) * 2) - 1;
+            }
+
+        }
+
+        ulong simhash = 0L;
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash |= 1UL << i;
+            }
+        }
+
+        return simhash;
+    }
+
+    public static ulong BitHackSplit2(string input)
+    {
+        if (input is null)
+            return 0;
+
+        var text = input.Trim();
+
+        if (text.Length == 0)
+            return 0;
+
+        Span<int> shingle = stackalloc int[64];
+
+        var span = input.AsSpan();
+        int start = 0;
+
+        for (int i = 0; i <= span.Length; i++)
+        {
+            if (i == span.Length || _delimeters.Contains(span[i]))
+            {
+                if (start < i)
+                {
+                    var token = span[start..i];
+                    var hashCode = ComputeFnv1aHash2(token);
+
+                    for (var j = 0; j < 64; j++)
+                    {
+                        shingle[j] += ((int)((hashCode >> j) & 1) * 2) - 1;
+                    }
+                }
+                start = i + 1;
+            }
+        }
+
+        ulong simhash = 0L;
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash |= 1UL << i;
+            }
+        }
+
+        return simhash;
+    }
+
+    private static ulong ComputeFnv1aHash2(ReadOnlySpan<char> text)
+    {
+
+        Span<byte> buffer = stackalloc byte[text.Length * 4];
+        var bytesWritten = Encoding.UTF8.GetBytes(text, buffer);
+
+        var slice = buffer[..bytesWritten];
+        return XxHash64.HashToUInt64(slice);
+    }
+
+
 }

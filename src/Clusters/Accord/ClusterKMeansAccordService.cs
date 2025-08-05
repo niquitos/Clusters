@@ -33,7 +33,7 @@ public class ClusterKMeansAccordService
         var kmeans = new KMeans(numberOfClusters);
 
         var clusters = kmeans.Learn(features);
-        int[] labels = clusters.Decide(features);
+        var labels = clusters.Decide(features);
 
         for (int i = 0; i < events.Length; i++)
         {

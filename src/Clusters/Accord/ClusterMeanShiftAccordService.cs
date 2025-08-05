@@ -18,9 +18,9 @@ public class ClusterMeanShiftAccordService
         var meanShift = new MeanShift();
 
         var clusters = meanShift.Learn(features);
-        int[] labels = clusters.Decide(features);
+        var labels = clusters.Decide(features);
 
-        for (int i = 0; i < events.Length; i++)
+        for (var i = 0; i < events.Length; i++)
         {
             events[i].ClusterId = labels[i];
         }

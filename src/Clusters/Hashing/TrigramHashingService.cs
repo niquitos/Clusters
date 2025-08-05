@@ -9,19 +9,19 @@ public class TrigramHashingService : HashingService
     public void HashMD5(string input)
     {
         Span<byte> buffer = stackalloc byte[input.Length * 2];
-        Encoding.UTF8.GetBytes(input.AsSpan(), buffer);
+        var bytesWritten = Encoding.UTF8.GetBytes(input.AsSpan(), buffer);
 
-        var slice = buffer[..3];
+        var slice = buffer[..bytesWritten];
         var hashCode = MD5.HashData(slice);
     }
 
-    public void HashXx64(string input)
+    public ulong HashXx64(string input)
     {
-        Span<byte> buffer = stackalloc byte[input.Length * 2];
-        Encoding.UTF8.GetBytes(input.AsSpan(), buffer);
-        
-        var slice = buffer[..3];
-        var hashCode = XxHash64.Hash(slice);
+        Span<byte> buffer = stackalloc byte[input.Length * 4];
+        var bytesWritten = Encoding.UTF8.GetBytes(input.AsSpan(), buffer);
+
+        var slice = buffer[..bytesWritten];
+        return XxHash64.HashToUInt64(slice);
     }
 
     public void HashFnv1aSimple(string input)

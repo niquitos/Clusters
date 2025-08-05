@@ -26,19 +26,35 @@ internal class Program
         //LevenshteinDistance();
         //RunDbScanClassic();
         //RunDbScanTest();
-        SimHash();
+        //SimHash();
+
+        Split2();
         //System.Console.ReadKey();
+    }
+
+    private static void Split2()
+    {
+        var reader = new CsvTextDataReader();
+        var records = reader.ReadTextData(DataPath, 0, 30_000).ToList();
+
+        DbscanSplit2.Clusterize([.. records]);
+
+        var dictionary = records.GroupBy(x => x.ClusterId)
+            .ToDictionary(g => g.Key, g => g.ToList())
+            .OrderBy(x => x.Key);
+
+        File.WriteAllText(Path.Combine(Directory, "Data\\result-split.json"), JsonConvert.SerializeObject(dictionary, Formatting.Indented));
     }
 
     private static void SimHash()
     {
-        var simple = SimHashService.DoSimple();
-        var unrolledhash = SimHashService.DoSimd(StringHelper.AllSymbolsInput);
-        var simdhash = SimHashService.DoSimdSimpler(StringHelper.AllSymbolsInput);
+       
+        var split = SimHashService.BitHackSplit(StringHelper.AllSymbolsInput);
+        var split2 = SimHashService.BitHackSplit2(StringHelper.AllSymbolsInput);
 
-        System.Console.WriteLine(simple);
-        System.Console.WriteLine(unrolledhash);
-        System.Console.WriteLine(simdhash);
+       
+        System.Console.WriteLine(split);
+        System.Console.WriteLine(split2);
     }
 
     private static void RunDbScanTest()

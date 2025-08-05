@@ -363,3 +363,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /src/Clusters.Data/Data/sample-full.csv
 /src/Clusters.Data/Data/sample-full-2.csv
+/src/Clusters.Data/Data/sample-100.csv
