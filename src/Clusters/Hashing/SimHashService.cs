@@ -1,7 +1,5 @@
-using System.IO.Hashing;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
-using System.Text;
 
 namespace Clusters.Hashing;
 
@@ -500,14 +498,6 @@ public static class SimHashService
 
     public static ulong BitHackSplit2(string input)
     {
-        if (input is null)
-            return 0;
-
-        var text = input.Trim();
-
-        if (text.Length == 0)
-            return 0;
-
         Span<int> shingle = stackalloc int[64];
 
         var span = input.AsSpan();
@@ -545,13 +535,93 @@ public static class SimHashService
 
     private static ulong ComputeFnv1aHash2(ReadOnlySpan<char> text)
     {
+        ulong hash = offsetBasis;
 
-        Span<byte> buffer = stackalloc byte[text.Length * 4];
-        var bytesWritten = Encoding.UTF8.GetBytes(text, buffer);
+        foreach (var ch in text)
+        {
+            hash ^= ch;
+            hash *= prime;
+        }
 
-        var slice = buffer[..bytesWritten];
-        return XxHash64.HashToUInt64(slice);
+        return hash;
     }
 
+    public static (ulong, ulong) BitHackSplit128(string input)
+    {
+        Span<int> shingle = stackalloc int[128];
 
+        var span = input.AsSpan();
+        int start = 0;
+
+        for (int i = 0; i <= span.Length; i++)
+        {
+            if (i == span.Length || _delimeters.Contains(span[i]))
+            {
+                if (start < i)
+                {
+                    var token = span[start..i];
+                    var (hash1, hash2) = ComputeFnv1aHash128(token);
+
+                    for (var j = 0; j < 64; j++)
+                    {
+                        shingle[j] += ((int)((hash1 >> j) & 1) * 2) - 1;
+                    }
+
+                    for (var j = 0; j < 64; j++)
+                    {
+                        shingle[j + 64] += ((int)((hash2 >> j) & 1) * 2) - 1;
+                    }
+                }
+                start = i + 1;
+            }
+        }
+
+        ulong simhash1 = 0L;
+        ulong simhash2 = 0L;
+
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash1 |= 1UL << i;
+            }
+        }
+
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i + 64] > 0)
+            {
+                simhash2 |= 1UL << i;
+            }
+        }
+
+        return (simhash1, simhash2);
+    }
+
+    private static (ulong, ulong) ComputeFnv1aHash128(ReadOnlySpan<char> text)
+    {
+        ulong prime1 = 0x0000000001000000;
+        ulong prime2 = 0x000000000000013B;
+        ulong offsetBasis1 = 0x6C62272E07BB0142;
+        ulong offsetBasis2 = 0x62B821756295C58D;
+
+        ulong hash1 = offsetBasis1;
+        ulong hash2 = offsetBasis2;
+
+        foreach (var ch in text)
+        {
+            hash1 ^= ch;
+            hash2 ^= ch;
+
+            var temp1 = hash1 * prime1;
+            var temp2 = hash1 * prime2;
+            var temp3 = hash2 * prime1;
+            var temp4 = hash2 * prime2;
+
+            hash1 = temp1 ^ temp4;
+            hash2 = temp2 ^ temp3;
+        }
+
+        return (hash1, hash2);
+    }
 }

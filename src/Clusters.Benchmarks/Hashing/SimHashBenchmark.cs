@@ -13,7 +13,7 @@ public class SimHashBenchmark
         SimHashService.DoSimple();
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void BitHack()
     {
         SimHashService.DoBitHack();
@@ -43,16 +43,22 @@ public class SimHashBenchmark
         SimHashService.DoBitHackNonOverlapping();
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void BitHackSplit()
     {
         SimHashService.BitHackSplit(StringHelper.AllSymbolsInput);
     }
 
     [Benchmark]
-    public void BitHackSplit2()
+    public void BitHackSplit64()
     {
         SimHashService.BitHackSplit2(StringHelper.AllSymbolsInput);
+    }
+
+    [Benchmark]
+    public void BitHackSplit128()
+    {
+        SimHashService.BitHackSplit128(StringHelper.AllSymbolsInput);
     }
 
     //[Benchmark]

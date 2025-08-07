@@ -13,4 +13,8 @@ public class EventModel
     public ulong SimHash1 { get; set; }
     public ulong SimHash2 { get; set; }
     public ulong SimHash3{ get; set; }
+
+    public (ulong,ulong) SimHash128_1 { get; set; }
+    public (ulong, ulong) SimHash128_2 { get; set; }
+    public (ulong, ulong) SimHash128_3 { get; set; }
 }

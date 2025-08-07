@@ -1,11 +1,12 @@
 ﻿using Clusters.Accord;
 using Clusters.Clusterization;
 using Clusters.Data.DataAccess;
+using Clusters.Data.Models.Domain;
+using Clusters.Data.Models.Domain.Services;
 using Clusters.Distances;
 using Clusters.Hashing;
 using Clusters.ML.Net;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace Clusters.Console;
@@ -13,7 +14,7 @@ namespace Clusters.Console;
 internal class Program
 {
     private static string Directory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
-    private static string DataPath => Path.Combine(Directory, "Data\\sample-full.csv");
+    private static string DataPath => Path.Combine(Directory, "Data\\sample-100.csv");
 
     private static void Main(string[] args)
     {
@@ -28,8 +29,33 @@ internal class Program
         //RunDbScanTest();
         //SimHash();
 
-        Split2();
-        //System.Console.ReadKey();
+        //Split2();
+        DomainTests();
+    }
+
+    private static unsafe  void DomainTests()
+    {
+        var operation = new ClusterizationOperation(
+            new ClusterizationCriteria(
+                [
+                new FieldSimilarity("text", 70),
+             //new FieldSimilarity("alert.key", 60),
+             //new FieldSimilarity("correlation_name", 85)
+            ]),
+            [new SortCriteria("text", true)],
+            new ClustersLimit(1000));
+
+        var reader = new DomainCsvTextDataReader();
+        var records = reader.ReadTextData(DataPath, 0, 10_000).ToList();
+
+        var service = new ClusterizationService(operation);
+
+        service.Clusterize(records);
+
+        System.Console.WriteLine($"size of cluster: {sizeof(Cluster)}");
+
+        File.WriteAllText(Path.Combine(Directory, "Data\\result-domain.json"), JsonConvert.SerializeObject(operation.Clusters, Formatting.Indented));
+
     }
 
     private static void Split2()
@@ -43,16 +69,16 @@ internal class Program
             .ToDictionary(g => g.Key, g => g.ToList())
             .OrderBy(x => x.Key);
 
-        File.WriteAllText(Path.Combine(Directory, "Data\\result-split.json"), JsonConvert.SerializeObject(dictionary, Formatting.Indented));
+        File.WriteAllText(Path.Combine(Directory, "Data\\result-100.json"), JsonConvert.SerializeObject(dictionary, Formatting.Indented));
     }
 
     private static void SimHash()
     {
-       
+
         var split = SimHashService.BitHackSplit(StringHelper.AllSymbolsInput);
         var split2 = SimHashService.BitHackSplit2(StringHelper.AllSymbolsInput);
 
-       
+
         System.Console.WriteLine(split);
         System.Console.WriteLine(split2);
     }
@@ -75,7 +101,7 @@ internal class Program
     {
         var reader = new CsvTextDataReader();
         var records = reader.ReadTextData(DataPath, 0, 30_000).ToList();
-        
+
         DbscanClassic.Clusterize([.. records]);
 
         var dictionary = records.GroupBy(x => x.ClusterId)

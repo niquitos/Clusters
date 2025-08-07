@@ -6,7 +6,7 @@ namespace Clusters.Clusterization;
 
 public static class DbscanParallel
 {
-    private const double epsilon1 = 0.7;
+    private const double epsilon1 = 0.70;
     private const double epsilon2 = 0.6;
     private const double epsilon3 = 0.85;
 
@@ -14,9 +14,9 @@ public static class DbscanParallel
     {
         Parallel.ForEach(events, @event =>
         {
-            @event.SimHash1 = SimHashService.DoSimd(@event.Text!);
-            @event.SimHash2 = SimHashService.DoSimd(@event.AlertKey!);
-            @event.SimHash3 = SimHashService.DoSimd(@event.CorrelationName!);
+            @event.SimHash1 = SimHashService.BitHackSplit2(@event.Text!);
+            @event.SimHash2 = SimHashService.BitHackSplit2(@event.AlertKey!);
+            @event.SimHash3 = SimHashService.BitHackSplit2(@event.CorrelationName!);
         });
 
         var clusterId = 1;
@@ -32,13 +32,10 @@ public static class DbscanParallel
                     @event.ClusterId = -1;
                     continue;
                 }
-                else
-                {
-                    AssignCluster(@event, neighbors, clusterId);
-                    ExpandCluster(events, neighbors, clusterId);
+                
+                AssignCluster(@event, neighbors, clusterId);
 
-                    clusterId++;
-                }
+                clusterId++;
             }
         }
     }
@@ -47,32 +44,25 @@ public static class DbscanParallel
     {
         @event.ClusterId = clusterId;
 
-        Parallel.ForEach(neighbors, neighbor => { neighbor.ClusterId = clusterId; });
-    }
-
-    private static void ExpandCluster(EventModel[] events, IEnumerable<EventModel> neighbors, int clusterId)
-    {
-        foreach (var @event in neighbors)
+        Parallel.ForEach(neighbors, neighbor =>
         {
-            var newNeighbors = GetNeighbors(@event, events);
-
-            if (newNeighbors.Any())
-            {
-                AssignCluster(@event, newNeighbors, clusterId);
-                ExpandCluster(events, newNeighbors, clusterId);
-            }
-        }
+            neighbor.ClusterId = clusterId;
+        });
     }
 
     private static ParallelQuery<EventModel> GetNeighbors(EventModel @event, EventModel[] events)
     {
         return events
             .AsParallel()
-            .Where(x => x != @event && x.ClusterId == 0)
-            .Where(x =>
-                HammingDistanceRatio(@event.SimHash1, x.SimHash1) >= epsilon1 &&
-                HammingDistanceRatio(@event.SimHash2, x.SimHash2) >= epsilon2 &&
-                HammingDistanceRatio(@event.SimHash3, x.SimHash3) >= epsilon3);
+            .Where(x => x != @event)
+            .Where(x => x.ClusterId == 0
+                &&
+                HammingDistanceRatio(@event.SimHash1, x.SimHash1) >= epsilon1
+                &&
+                HammingDistanceRatio(@event.SimHash2, x.SimHash2) >= epsilon2
+                &&
+                HammingDistanceRatio(@event.SimHash3, x.SimHash3) >= epsilon3
+            );
     }
 
     private static double HammingDistanceRatio(ulong hash1, ulong hash2)
