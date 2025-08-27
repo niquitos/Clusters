@@ -5,6 +5,13 @@ using Clusters.Data.Models.Domain.Common;
 
 namespace Clusters.Data.Models.Domain;
 
+public enum ClusterType
+{
+    Ordinal,
+    Merged,
+    Garbage
+}
+
 public class Cluster
 {
     private List<ClusterEvent> _events;
@@ -12,7 +19,9 @@ public class Cluster
     public Guid Id { get; }
     public Guid SessionId { get; }
     public Name Name { get; private set; }
-    
+
+    public ClusterType ClusterType { get; private set; }
+
     public IReadOnlyList<ClusterEvent> Events => _events;
 
     public Cluster(Guid sessionId, Guid id)
@@ -42,5 +51,10 @@ public class Cluster
         _events = sortCriteria.Ascending
             ? [.. _events.OrderBy(e => e.Payload[fieldName].ToString())]
             : [.. _events.OrderByDescending(e => e.Payload[fieldName].ToString())];
+    }
+
+    internal void SetClusterType(ClusterType type)
+    {
+        ClusterType = type;
     }
 }

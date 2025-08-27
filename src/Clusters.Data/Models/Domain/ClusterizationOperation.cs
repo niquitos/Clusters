@@ -21,7 +21,7 @@ public class ClusterizationOperation
 
     public void AddCluster(Cluster cluster) => _clusters.Add(cluster);
 
-    public void SetClusters(List<ClusterEvent> events)
+    public void CreateClusters(List<ClusterEvent> events)
     {
         var clusters = events
             .Where(x => x.ClusterId.HasValue && x.ClusterId != Guid.Empty)
@@ -33,8 +33,13 @@ public class ClusterizationOperation
         var namedClusters = SetClusterNames(sortedClusters);
         _clusters = SquashRemainingClusters(namedClusters).ToList();
 
-        var garbageCluster = CreateCluster(Guid.Empty, [.. events.Where(x => x.ClusterId == Guid.Empty)]);
+        var garbageEvents = events.Where(x => x.ClusterId == Guid.Empty).ToList();
+        if (garbageEvents.Count == 0)
+            return;
+
+        var garbageCluster = CreateCluster(Guid.NewGuid(), garbageEvents);
         garbageCluster.SetName(CreateClusterName(_clusters.Count + 1));
+        garbageCluster.SetClusterType(ClusterType.Garbage);
 
         _clusters.Add(garbageCluster);
     }
@@ -68,13 +73,14 @@ public class ClusterizationOperation
         clustersArray[ClustersLimit.MaxClusterLimit - 1] = squashCluster;
 
         squashCluster.SetName(CreateClusterName(ClustersLimit.Value));
+        squashCluster.SetClusterType(ClusterType.Merged);
 
         return clustersArray.Take(ClustersLimit.MaxClusterLimit);
     }
 
     public Cluster CreateCluster(Guid clusterId, List<ClusterEvent> events)
     {
-        var cluster = new Cluster(Id, clusterId);
+        var cluster = new Cluster(clusterId, Id);
         events.ForEach(x => x.SetClusterId(clusterId));
         cluster.SetEvents(events);
         return cluster;

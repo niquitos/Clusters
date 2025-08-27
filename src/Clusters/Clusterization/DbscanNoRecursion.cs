@@ -2,7 +2,6 @@ using Clusters.Data.Models;
 using Clusters.Hashing;
 using System.Numerics;
 using ZLinq;
-using ZLinq.Linq;
 
 namespace Clusters.Clusterization;
 
@@ -16,9 +15,9 @@ public static class DbscanNoRecursion
     {
         Parallel.ForEach(events, @event =>
         {
-            @event.SimHash1 = SimHashService.DoSimd(@event.Text!);
-            @event.SimHash2 = SimHashService.DoSimd(@event.AlertKey!);
-            @event.SimHash3 = SimHashService.DoSimd(@event.CorrelationName!);
+            @event.SimHash1 = SimHashService.DoSIMD(@event.Text!);
+            @event.SimHash2 = SimHashService.DoSIMD(@event.AlertKey!);
+            @event.SimHash3 = SimHashService.DoSIMD(@event.CorrelationName!);
         });
 
         var clusterId = 1;
@@ -159,7 +158,7 @@ public static class DbscanSplit2
     {
         return events
             .Where(other => other != @event && other.ClusterId == 0 &&
-                HammingDistanceRatio(@event.SimHash1, other.SimHash1) >= epsilon1
+                CalculateJaccardRatio(@event.SimHash1, other.SimHash1) >= epsilon1
                 //&&
                 //HammingDistanceRatio(@event.SimHash2, other.SimHash2) >= epsilon2
                 //&&
@@ -192,7 +191,7 @@ public static class DbscanSplitZlinq
     public static void Clusterize(EventModel[] events)
     {
         var valueEvents = events.AsValueEnumerable();
-        foreach (var @event in valueEvents) 
+        foreach (var @event in valueEvents)
         {
             @event.SimHash1 = SimHashService.BitHackSplit2(@event.Text!);
             @event.SimHash2 = SimHashService.BitHackSplit2(@event.AlertKey!);
@@ -200,13 +199,13 @@ public static class DbscanSplitZlinq
         }
 
         var clusterId = 1;
-        
+
         foreach (var @event in valueEvents)
         {
             if (@event.ClusterId == 0)
             {
-                var neighbors = valueEvents.Where(other => 
-                    other != @event && 
+                var neighbors = valueEvents.Where(other =>
+                    other != @event &&
                     other.ClusterId == 0 &&
                     CalculateJaccardRatio(@event.SimHash1, other.SimHash1) >= epsilon1 &&
                     CalculateJaccardRatio(@event.SimHash2, other.SimHash2) >= epsilon2 &&

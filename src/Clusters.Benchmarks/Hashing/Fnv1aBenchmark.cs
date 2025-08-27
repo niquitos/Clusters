@@ -1,79 +1,34 @@
 using BenchmarkDotNet.Attributes;
+using Clusters.Hashing;
 
 namespace Clusters.Benchmarks.Hashing;
 
 [MemoryDiagnoser]
 public class Fnv1aBenchmark
 {
+    private static TrigramHashingService _hashingService = new();
 
     [Benchmark]
-    public void Simple()
+    public void SimpleFor()
     {
-        Fnv1aSimple();
-    }
-
-    [Benchmark]
-    public void Unrolled()
-    {
-        Fnv1aUnrolled();
+        _hashingService.HashFnv1aSimpleFor("abc");
     }
 
     [Benchmark]
     public void Unsafe()
     {
-        Fnv1aUnsafe();
+        _hashingService.HashFnv1aUnsafe("abc");
     }
 
-    private const string trigram = "abc";
-    const ulong offsetBasis = 14695981039346656037;
-    const ulong prime = 1099511628211;
-
-    private ulong Fnv1aSimple()
+    [Benchmark]
+    public void Unrolled()
     {
-        var hash = offsetBasis;
-
-        for (var i = 0; i < trigram.Length; i++)
-        {
-            hash ^= trigram[i];
-            hash *= prime;
-        }
-
-        return hash;
+        _hashingService.HashFnv1aUnrolled("abc");
     }
 
-    private ulong Fnv1aUnrolled()
+    [Benchmark]
+    public void SIMD()
     {
-        var hash = offsetBasis;
-
-        hash ^= trigram[0];
-        hash *= prime;
-
-        hash ^= trigram[1];
-        hash *= prime;
-
-        hash ^= trigram[2];
-        hash *= prime;
-
-        return hash;
-    }
-
-    public unsafe ulong Fnv1aUnsafe()
-    {
-        ulong hash = offsetBasis;
-
-        fixed (char* start = trigram)
-        {
-            var ptr = start;
-            var end = ptr + trigram.Length;
-
-            while (ptr < end)
-            {
-                hash ^= *ptr;
-                hash *= prime;
-                ptr++;
-            }
-        }
-
-        return hash;
+        _hashingService.Fnv1aHashSimd("abc");
     }
 }

@@ -8,6 +8,7 @@ using Clusters.Hashing;
 using Clusters.ML.Net;
 using Newtonsoft.Json;
 using System.Reflection;
+using static System.Console;
 
 namespace Clusters.Console;
 
@@ -25,12 +26,26 @@ internal class Program
         //GmmClusterizationAccord();
         //Fnv1aHashCollisions();
         //LevenshteinDistance();
-        //RunDbScanClassic();
+        RunDbScanClassic();
         //RunDbScanTest();
-        //SimHash();
+        SimHash();
 
         //Split2();
         DomainTests();
+
+       //Trigramhashes();
+    }
+
+    private static void Trigramhashes()
+    {
+        var services = new TrigramHashingService();
+
+        var input = "abc";
+
+        WriteLine(services.Fnv1aHashSimpleFor(input));
+        WriteLine(services.Fnv1aHashUnsafe(input));
+        WriteLine(services.Fnv1aHashUnrolled(input));
+        WriteLine(services.Fnv1aHashSimd(input));
     }
 
     private static unsafe  void DomainTests()
@@ -38,7 +53,7 @@ internal class Program
         var operation = new ClusterizationOperation(
             new ClusterizationCriteria(
                 [
-                new FieldSimilarity("text", 70),
+                new FieldSimilarity("text", 80),
              //new FieldSimilarity("alert.key", 60),
              //new FieldSimilarity("correlation_name", 85)
             ]),
@@ -51,8 +66,6 @@ internal class Program
         var service = new ClusterizationService(operation);
 
         service.Clusterize(records);
-
-        System.Console.WriteLine($"size of cluster: {sizeof(Cluster)}");
 
         File.WriteAllText(Path.Combine(Directory, "Data\\result-domain.json"), JsonConvert.SerializeObject(operation.Clusters, Formatting.Indented));
 
@@ -75,12 +88,12 @@ internal class Program
     private static void SimHash()
     {
 
-        var split = SimHashService.BitHackSplit(StringHelper.AllSymbolsInput);
-        var split2 = SimHashService.BitHackSplit2(StringHelper.AllSymbolsInput);
-
-
-        System.Console.WriteLine(split);
-        System.Console.WriteLine(split2);
+        WriteLine(SimHashService.DoSimple(StringHelper.AllSymbolsInput));
+        WriteLine(SimHashService.DoBitHack(StringHelper.AllSymbolsInput));
+        WriteLine(SimHashService.DoUnsafe(StringHelper.AllSymbolsInput));
+        WriteLine(SimHashService.DoUnrolled(StringHelper.AllSymbolsInput));
+        WriteLine(SimHashService.DoSIMD(StringHelper.AllSymbolsInput));
+        WriteLine(HashService.DoSIMD(StringHelper.AllSymbolsInput));
     }
 
     private static void RunDbScanTest()
@@ -100,7 +113,7 @@ internal class Program
     private static void RunDbScanClassic()
     {
         var reader = new CsvTextDataReader();
-        var records = reader.ReadTextData(DataPath, 0, 30_000).ToList();
+        var records = reader.ReadTextData(DataPath, 0, 10_000).ToList();
 
         DbscanClassic.Clusterize([.. records]);
 
@@ -199,8 +212,8 @@ internal class Program
         var service = new TrigramHashingService();
 
         var uniqueChars = Characters.Distinct().ToArray();
-        System.Console.WriteLine($"Unique characters: {uniqueChars.Length}");
-        System.Console.WriteLine($"Possible trigrams: {Math.Pow(uniqueChars.Length, 3):N0}");
+        WriteLine($"Unique characters: {uniqueChars.Length}");
+        WriteLine($"Possible trigrams: {Math.Pow(uniqueChars.Length, 3):N0}");
 
         // Generate all possible trigrams
         var trigrams = GenerateAllTrigrams(uniqueChars);
@@ -211,7 +224,7 @@ internal class Program
 
         foreach (var trigram in trigrams)
         {
-            ulong hash = service.ComputeFnv1aUnsafeTrigramHash(trigram);
+            ulong hash = service.Fnv1aHashUnrolled(trigram);
 
             if (!hashCounts.ContainsKey(hash))
             {
@@ -220,15 +233,15 @@ internal class Program
             else
             {
                 collisions++;
-                System.Console.WriteLine($"Collision #{collisions}:");
-                System.Console.WriteLine($"  '{trigram}' (hash: {hash:X16})");
-                System.Console.WriteLine($"  Conflicts with: {string.Join(", ", hashCounts[hash])}");
+                WriteLine($"Collision #{collisions}:");
+                WriteLine($"  '{trigram}' (hash: {hash:X16})");
+                WriteLine($"  Conflicts with: {string.Join(", ", hashCounts[hash])}");
             }
 
             hashCounts[hash].Add(trigram);
         }
 
-        System.Console.WriteLine($"\nTotal collisions found: {collisions}");
+        WriteLine($"\nTotal collisions found: {collisions}");
     }
 
     private static IEnumerable<string> GenerateAllTrigrams(char[] chars)
@@ -247,14 +260,14 @@ internal class Program
         const string msg = "brown fox jumps over the dog";
         const string msg2 = "how far the path could go";
 
-        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistance(cat, cot));
-        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized(cat, cot));
-        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized_1(cat, cot));
+        WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistance(cat, cot));
+        WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized(cat, cot));
+        WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized_1(cat, cot));
 
-        System.Console.WriteLine("------------");
+        WriteLine("------------");
 
-        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistance(msg, msg2));
-        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized(msg, msg2));
-        System.Console.WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized_1(msg, msg2));
+        WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistance(msg, msg2));
+        WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized(msg, msg2));
+        WriteLine(LevinshteinDistanceService.ComputeLevenshteinDistanceOptimized_1(msg, msg2));
     }
 }

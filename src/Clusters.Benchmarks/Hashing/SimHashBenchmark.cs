@@ -7,34 +7,40 @@ namespace Clusters.Benchmarks.Hashing;
 public class SimHashBenchmark
 {
 
-    //[Benchmark]
+    [Benchmark]
     public void Simple()
     {
-        SimHashService.DoSimple();
+        SimHashService.DoSimple(StringHelper.AllSymbolsInput);
     }
 
-    //[Benchmark]
+    [Benchmark]
     public void BitHack()
     {
         SimHashService.DoBitHack();
     }
 
-    //[Benchmark]
-    public void UnrolledBitHack()
+    [Benchmark]
+    public void Unsafe()
     {
-        SimHashService.DoBitHackUnrolled();
+        SimHashService.DoUnsafe(StringHelper.AllSymbolsInput);
+    }
+
+    [Benchmark]
+    public void Unrolled()
+    {
+        SimHashService.DoUnrolled(StringHelper.AllSymbolsInput);
     }
 
     //[Benchmark]
-    public void Unrolled()
-    {
-        SimHashService.DoUnrolled();
-    }
+    //public void Unrolled()
+    //{
+    //    SimHashService.DoUnrolled();
+    //}
 
     [Benchmark]
     public void Simd()
     {
-        SimHashService.DoSimd(StringHelper.AllSymbolsInput);
+        SimHashService.DoSIMD(StringHelper.AllSymbolsInput);
     }
 
     //[Benchmark]
@@ -49,13 +55,13 @@ public class SimHashBenchmark
         SimHashService.BitHackSplit(StringHelper.AllSymbolsInput);
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void BitHackSplit64()
     {
         SimHashService.BitHackSplit2(StringHelper.AllSymbolsInput);
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void BitHackSplit128()
     {
         SimHashService.BitHackSplit128(StringHelper.AllSymbolsInput);

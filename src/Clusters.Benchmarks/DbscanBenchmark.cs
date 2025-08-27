@@ -51,11 +51,11 @@ public class DbscanBenchmark
             AlertKey = r.AlertKey
         })];
 
-        _domainRecords.ForEach(x => x.SetClusterId(null));
+        _domainRecords.ForEach(x => x.SetClusterId(Guid.Empty));
     }
 
 
-    //[Benchmark]
+    [Benchmark]
     public void Classic()
     {
         DbscanClassic.Clusterize([.. _records]);
@@ -79,10 +79,16 @@ public class DbscanBenchmark
         DbscanYield.Clusterize([.. _records]);
     }
 
-    //[Benchmark]
+    [Benchmark]
     public void No_Recursion()
     {
         DbscanNoRecursion.Clusterize([.. _records]);
+    }
+
+    //[Benchmark]
+    public void Inlined()
+    {
+        DbscanInlined.Clusterize([.. _records]);
     }
 
     //[Benchmark]

@@ -6,7 +6,7 @@ namespace Clusters.Clusterization;
 
 public static class DbscanClassic
 {
-    private const double epsilon1 = 0.7;
+    private const double epsilon1 = 0.80;
     private const double epsilon2 = 0.6;
     private const double epsilon3 = 0.85;
 
@@ -14,9 +14,9 @@ public static class DbscanClassic
     {
         Parallel.ForEach(events, @event =>
         {
-            @event.SimHash1 = SimHashService.DoSimd(@event.Text!);
-            @event.SimHash2 = SimHashService.DoSimd(@event.AlertKey!);
-            @event.SimHash3 = SimHashService.DoSimd(@event.CorrelationName!);
+            @event.SimHash1 = SimHashService.DoSIMD(@event.Text!);
+            //@event.SimHash2 = SimHashService.DoSIMD(@event.AlertKey!);
+            //@event.SimHash3 = SimHashService.DoSIMD(@event.CorrelationName!);
         });
 
         var clusterId = 1;
@@ -32,6 +32,7 @@ public static class DbscanClassic
                     @event.ClusterId = -1;
                     continue;
                 }
+
                 AssignCluster(@event, neighbors, clusterId);
                 ExpandCluster(events, neighbors, clusterId);
 
@@ -80,7 +81,7 @@ public static class DbscanClassic
 
     private static double HammingDistanceRatio(ulong hash1, ulong hash2)
     {
-        ulong xorResult = hash1 ^ hash2;
+        var xorResult = hash1 ^ hash2;
         return 1 - ((double)BitOperations.PopCount(xorResult) / 64);
     }
 }

@@ -41,7 +41,7 @@ public class DomainCsvTextDataReader
         {
             var jObject = new JObject()
             {
-                ["text"] = @event.Time,
+                ["text"] = @event.Text,
                 ["event_src.host"] = @event.EventSrcHost,
                 ["alert.key"] = @event.AlertKey,
                 ["correlation_name"] = @event.CorrelationName,

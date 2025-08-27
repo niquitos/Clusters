@@ -1,4 +1,8 @@
-﻿using System.IO.Hashing;
+﻿
+using MurmurHash;
+using MurmurHash.Net;
+using System;
+using System.IO.Hashing;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,6 +19,16 @@ public class TrigramHashingService : HashingService
         var hashCode = MD5.HashData(slice);
     }
 
+    public void HashMurmur(string input)
+    {
+
+        Span<byte> buffer = stackalloc byte[input.Length * 2];
+        var bytesWritten = Encoding.UTF8.GetBytes(input.AsSpan(), buffer);
+
+        var slice = buffer[..bytesWritten];
+        var hash = MurmurHash3.Hash32(bytes: slice, seed: 123456U);
+    }
+
     public ulong HashXx64(string input)
     {
         Span<byte> buffer = stackalloc byte[input.Length * 4];
@@ -24,20 +38,30 @@ public class TrigramHashingService : HashingService
         return XxHash64.HashToUInt64(slice);
     }
 
-    public void HashFnv1aSimple(string input)
+    public ulong HashXx64(byte[] input)
     {
-        var span = input.AsSpan();
-
-        var slice = span[..3];
-        var hashCode = ComputeFnv1aHashSimpleFor(slice);
+        return XxHash64.HashToUInt64(input);
     }
 
-    public void HashFnv1aSimpleTrigram(string input)
+    public uint HashMurmur(byte[] input)
+    {
+        return MurmurHash3.Hash32(bytes: input, seed: 123456U);
+    }
+
+    public void HashFnv1aSimpleFor(string input)
     {
         var span = input.AsSpan();
 
         var slice = span[..3];
-        var hashCode = ComputeFnv1aHashSimpleTrigram(slice);
+        var hashCode = Fnv1aHashSimpleFor(slice);
+    }
+
+    public void HashFnv1aUnrolled(string input)
+    {
+        var span = input.AsSpan();
+
+        var slice = span[..3];
+        var hashCode = Fnv1aHashUnrolled(slice);
     }
 
     public void HashFnv1aUnsafe(string input)
@@ -45,7 +69,7 @@ public class TrigramHashingService : HashingService
         var span = input.AsSpan();
 
         var slice = span[..3];
-        var hashCode = ComputeFnv1aHashUnsafe(slice);
+        var hashCode = Fnv1aHashUnsafe(slice);
 
     }
 
@@ -54,16 +78,7 @@ public class TrigramHashingService : HashingService
         var span = input.AsSpan();
 
         var slice = span[..3];
-        var hashCode = ComputeFnv1aHashSimd(slice);
-
-    }
-
-    public void HashFnv1aTrigram(string input)
-    {
-        var span = input.AsSpan();
-
-        var slice = span[..3];
-        var hashCode = ComputeFnv1aUnsafeTrigramHash(slice);
+        var hashCode = Fnv1aHashSimd(slice);
 
     }
 

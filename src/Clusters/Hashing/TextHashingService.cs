@@ -26,19 +26,19 @@ public class TextHashingService : HashingService
     public void HashFnv1aSimple(string input)
     {
         var span = input.AsSpan();
-        var hashCode = ComputeFnv1aHashSimpleFor(span);
+        var hashCode = Fnv1aHashSimpleFor(span);
     }
 
     public void HashFnv1aUnsafe(string input)
     {
         var span = input.AsSpan();
-        var hashCode = ComputeFnv1aHashUnsafe(span);
+        var hashCode = Fnv1aHashUnsafe(span);
     }
 
     public void HashFnv1aText(string input)
     {
         var span = input.AsSpan();
-        var hashCode = ComputeFnv1aHashSimd(span);
+        var hashCode = Fnv1aHashSimd(span);
     }
 
     public void HashGetHashCode(string input)
