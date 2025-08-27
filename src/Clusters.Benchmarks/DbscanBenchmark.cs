@@ -85,7 +85,7 @@ public class DbscanBenchmark
         DbscanNoRecursion.Clusterize([.. _records]);
     }
 
-    //[Benchmark]
+    [Benchmark]
     public void Inlined()
     {
         DbscanInlined.Clusterize([.. _records]);

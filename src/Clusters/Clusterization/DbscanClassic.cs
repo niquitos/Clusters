@@ -15,8 +15,8 @@ public static class DbscanClassic
         Parallel.ForEach(events, @event =>
         {
             @event.SimHash1 = SimHashService.DoSIMD(@event.Text!);
-            //@event.SimHash2 = SimHashService.DoSIMD(@event.AlertKey!);
-            //@event.SimHash3 = SimHashService.DoSIMD(@event.CorrelationName!);
+            @event.SimHash2 = SimHashService.DoSIMD(@event.AlertKey!);
+            @event.SimHash3 = SimHashService.DoSIMD(@event.CorrelationName!);
         });
 
         var clusterId = 1;
