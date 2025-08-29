@@ -1,5 +1,6 @@
 ﻿using Clusters.Accord;
 using Clusters.Clusterization;
+using Clusters.Clusterization.MeanShift;
 using Clusters.Data.DataAccess;
 using Clusters.Data.Models.Domain;
 using Clusters.Data.Models.Domain.Services;
@@ -26,14 +27,36 @@ internal class Program
         //GmmClusterizationAccord();
         //Fnv1aHashCollisions();
         //LevenshteinDistance();
-        RunDbScanClassic();
+        //RunDbScanClassic();
         //RunDbScanTest();
         SimHash();
 
         //Split2();
-        DomainTests();
+        //DomainTests();
 
-       //Trigramhashes();
+        //Trigramhashes();
+
+        //RunMeanShiftClassic();
+        //Centroids();
+    }
+
+    private static void Centroids()
+    {
+        var reader = new CsvTextDataReader();
+        var records = reader.ReadTextData(DataPath, 0, 10_000).ToList();
+
+        Parallel.ForEach(records, @event =>
+        {
+            @event.SimHash1 = SimHashService.DoSIMD(@event.Text!);
+            //@event.SimHash2 = SimHashService.DoSIMD(@event.AlertKey!);
+            //@event.SimHash3 = SimHashService.DoSIMD(@event.CorrelationName!);
+        });
+
+        var data = records.Select(x => x.SimHash1).ToList();
+
+        System.Console.WriteLine(CentroidsCalculator.Simple(data));
+        System.Console.WriteLine(CentroidsCalculator.SIMD(data));
+
     }
 
     private static void Trigramhashes()
@@ -89,11 +112,27 @@ internal class Program
     {
 
         WriteLine(SimHashService.DoSimple(StringHelper.AllSymbolsInput));
-        WriteLine(SimHashService.DoBitHack(StringHelper.AllSymbolsInput));
-        WriteLine(SimHashService.DoUnsafe(StringHelper.AllSymbolsInput));
-        WriteLine(SimHashService.DoUnrolled(StringHelper.AllSymbolsInput));
-        WriteLine(SimHashService.DoSIMD(StringHelper.AllSymbolsInput));
-        WriteLine(HashService.DoSIMD(StringHelper.AllSymbolsInput));
+        WriteLine(SimHashService2.ComputeSimHashVector(StringHelper.AllSymbolsInput));
+        //WriteLine(SimHashService.DoBitHack(StringHelper.AllSymbolsInput));
+        //WriteLine(SimHashService.DoBitHack2(StringHelper.AllSymbolsInput));
+        //WriteLine(SimHashService.DoUnsafe(StringHelper.AllSymbolsInput));
+        //WriteLine(SimHashService.DoUnrolled(StringHelper.AllSymbolsInput));
+        //WriteLine(SimHashService.DoSIMD(StringHelper.AllSymbolsInput));
+        //WriteLine(HashService.DoSIMD(StringHelper.AllSymbolsInput));
+    }
+
+    private static void RunMeanShiftClassic()
+    {
+        var reader = new CsvTextDataReader();
+        var records = reader.ReadTextData(DataPath, 0, 10_000).ToList();
+
+        MeanShiftClassic.Clusterize([.. records]);
+
+        var dictionary = records.GroupBy(x => x.ClusterId)
+            .ToDictionary(g => g.Key, g => g.ToList())
+            .OrderBy(x => x.Key);
+
+        File.WriteAllText(Path.Combine(Directory, "Data\\result-meanshift-classic.json"), JsonConvert.SerializeObject(dictionary, Formatting.Indented));
     }
 
     private static void RunDbScanTest()

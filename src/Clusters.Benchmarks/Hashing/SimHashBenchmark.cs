@@ -13,19 +13,19 @@ public class SimHashBenchmark
         SimHashService.DoSimple(StringHelper.AllSymbolsInput);
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void BitHack()
     {
-        SimHashService.DoBitHack();
+        SimHashService.DoBitHack2();
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void Unsafe()
     {
         SimHashService.DoUnsafe(StringHelper.AllSymbolsInput);
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void Unrolled()
     {
         SimHashService.DoUnrolled(StringHelper.AllSymbolsInput);
@@ -41,6 +41,12 @@ public class SimHashBenchmark
     public void Simd()
     {
         SimHashService.DoSIMD(StringHelper.AllSymbolsInput);
+    }
+    
+    [Benchmark]
+    public void Simd2()
+    {
+        SimHashService2.ComputeSimHashVector(StringHelper.AllSymbolsInput);
     }
 
     //[Benchmark]

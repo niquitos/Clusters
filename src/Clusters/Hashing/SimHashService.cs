@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
 
@@ -67,228 +68,12 @@ public static class SimHashService
         return simhash;
     }
 
-    public unsafe static ulong DoUnsafe(string input)
-    {
-        Span<int> shingle = stackalloc int[64];
-        var span = input.AsSpan();
-        for (var i = 0; i < span.Length - 2; i++)
-        {
-            var slice = span.Slice(i, 3);
-            var hashCode = ComputeFnv1aHash(slice);
-            fixed (int* pShingle = shingle)
-            {
-                int* pCurrent = pShingle;
-                for (var j = 0; j < 64; j++)
-                {
-                    *pCurrent += ((int)((hashCode & (1UL << j)) >> j) * 2) - 1;
-                    pCurrent++;
-                }
-            }
-        }
-
-        ulong simhash = 0L;
-        for (var i = 0; i < 64; i++)
-        {
-            if (shingle[i] > 0)
-            {
-                simhash |= 1UL << i;
-            }
-        }
-        return simhash;
-    }
-
-    public unsafe static ulong DoUnrolled(string input)
+    public static ulong DoBitHack2(string input = StringHelper.AllSymbolsInput)
     {
         Span<int> shingle = stackalloc int[64];
         var span = input.AsSpan();
 
-        fixed (int* pShingle = shingle)
-        {
-            for (var i = 0; i < span.Length - 2; i++)
-            {
-                var slice = span.Slice(i, 3);
-                var hashCode = ComputeFnv1aHash(slice);
-
-                int* pCurrent = pShingle;
-                
-                *pCurrent += ((int)((hashCode & (1UL << 0)) >> 0) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 1)) >> 1) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 2)) >> 2) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 3)) >> 3) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 4)) >> 4) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 5)) >> 5) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 6)) >> 6) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 7)) >> 7) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 8)) >> 8) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 9)) >> 9) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 10)) >> 10) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 11)) >> 11) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 12)) >> 12) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 13)) >> 13) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 14)) >> 14) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 15)) >> 15) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 16)) >> 16) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 17)) >> 17) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 18)) >> 18) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 19)) >> 19) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 20)) >> 20) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 21)) >> 21) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 22)) >> 22) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 23)) >> 23) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 24)) >> 24) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 25)) >> 25) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 26)) >> 26) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 27)) >> 27) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 28)) >> 28) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 29)) >> 29) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 30)) >> 30) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 31)) >> 31) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 32)) >> 32) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 33)) >> 33) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 34)) >> 34) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 35)) >> 35) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 36)) >> 36) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 37)) >> 37) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 38)) >> 38) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 39)) >> 39) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 40)) >> 40) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 41)) >> 41) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 42)) >> 42) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 43)) >> 43) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 44)) >> 44) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 45)) >> 45) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 46)) >> 46) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 47)) >> 47) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 48)) >> 48) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 49)) >> 49) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 50)) >> 50) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 51)) >> 51) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 52)) >> 52) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 53)) >> 53) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 54)) >> 54) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 55)) >> 55) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 56)) >> 56) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 57)) >> 57) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 58)) >> 58) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 59)) >> 59) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 60)) >> 60) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 61)) >> 61) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 62)) >> 62) * 2) - 1; pCurrent++;
-                *pCurrent += ((int)((hashCode & (1UL << 63)) >> 63) * 2) - 1;
-            }
-        }
-
-        ulong simhash = 0L;
-        fixed (int* pShingle = shingle)
-        {
-            int* pCurrent = pShingle;
-            for (var i = 0; i < 64; i++)
-            {
-                if (*pCurrent > 0)
-                {
-                    simhash |= 1UL << i;
-                }
-                pCurrent++;
-            }
-        }
-
-        return simhash;
-    }
-
-    public static ulong DoBitHackUnrolled()
-    {
-        Span<int> shingle = stackalloc int[64];
-        var span = StringHelper.AllSymbolsInput.AsSpan();
-
         for (var i = 0; i < span.Length - 2; i++)
-        {
-            var slice = span.Slice(i, 3);
-            var hashCode = ComputeFnv1aHash(slice);
-
-            shingle[0] += ((int)((hashCode >> 0) & 1) * 2) - 1;
-            shingle[1] += ((int)((hashCode >> 1) & 1) * 2) - 1;
-            shingle[2] += ((int)((hashCode >> 2) & 1) * 2) - 1;
-            shingle[3] += ((int)((hashCode >> 3) & 1) * 2) - 1;
-            shingle[4] += ((int)((hashCode >> 4) & 1) * 2) - 1;
-            shingle[5] += ((int)((hashCode >> 5) & 1) * 2) - 1;
-            shingle[6] += ((int)((hashCode >> 6) & 1) * 2) - 1;
-            shingle[7] += ((int)((hashCode >> 7) & 1) * 2) - 1;
-            shingle[8] += ((int)((hashCode >> 8) & 1) * 2) - 1;
-            shingle[9] += ((int)((hashCode >> 9) & 1) * 2) - 1;
-            shingle[10] += ((int)((hashCode >> 10) & 1) * 2) - 1;
-            shingle[11] += ((int)((hashCode >> 11) & 1) * 2) - 1;
-            shingle[12] += ((int)((hashCode >> 12) & 1) * 2) - 1;
-            shingle[13] += ((int)((hashCode >> 13) & 1) * 2) - 1;
-            shingle[14] += ((int)((hashCode >> 14) & 1) * 2) - 1;
-            shingle[15] += ((int)((hashCode >> 15) & 1) * 2) - 1;
-            shingle[16] += ((int)((hashCode >> 16) & 1) * 2) - 1;
-            shingle[17] += ((int)((hashCode >> 17) & 1) * 2) - 1;
-            shingle[18] += ((int)((hashCode >> 18) & 1) * 2) - 1;
-            shingle[19] += ((int)((hashCode >> 19) & 1) * 2) - 1;
-            shingle[20] += ((int)((hashCode >> 20) & 1) * 2) - 1;
-            shingle[21] += ((int)((hashCode >> 21) & 1) * 2) - 1;
-            shingle[22] += ((int)((hashCode >> 22) & 1) * 2) - 1;
-            shingle[23] += ((int)((hashCode >> 23) & 1) * 2) - 1;
-            shingle[24] += ((int)((hashCode >> 24) & 1) * 2) - 1;
-            shingle[25] += ((int)((hashCode >> 25) & 1) * 2) - 1;
-            shingle[26] += ((int)((hashCode >> 26) & 1) * 2) - 1;
-            shingle[27] += ((int)((hashCode >> 27) & 1) * 2) - 1;
-            shingle[28] += ((int)((hashCode >> 28) & 1) * 2) - 1;
-            shingle[29] += ((int)((hashCode >> 29) & 1) * 2) - 1;
-            shingle[30] += ((int)((hashCode >> 30) & 1) * 2) - 1;
-            shingle[31] += ((int)((hashCode >> 31) & 1) * 2) - 1;
-            shingle[32] += ((int)((hashCode >> 32) & 1) * 2) - 1;
-            shingle[33] += ((int)((hashCode >> 33) & 1) * 2) - 1;
-            shingle[34] += ((int)((hashCode >> 34) & 1) * 2) - 1;
-            shingle[35] += ((int)((hashCode >> 35) & 1) * 2) - 1;
-            shingle[36] += ((int)((hashCode >> 36) & 1) * 2) - 1;
-            shingle[37] += ((int)((hashCode >> 37) & 1) * 2) - 1;
-            shingle[38] += ((int)((hashCode >> 38) & 1) * 2) - 1;
-            shingle[39] += ((int)((hashCode >> 39) & 1) * 2) - 1;
-            shingle[40] += ((int)((hashCode >> 40) & 1) * 2) - 1;
-            shingle[41] += ((int)((hashCode >> 41) & 1) * 2) - 1;
-            shingle[42] += ((int)((hashCode >> 42) & 1) * 2) - 1;
-            shingle[43] += ((int)((hashCode >> 43) & 1) * 2) - 1;
-            shingle[44] += ((int)((hashCode >> 44) & 1) * 2) - 1;
-            shingle[45] += ((int)((hashCode >> 45) & 1) * 2) - 1;
-            shingle[46] += ((int)((hashCode >> 46) & 1) * 2) - 1;
-            shingle[47] += ((int)((hashCode >> 47) & 1) * 2) - 1;
-            shingle[48] += ((int)((hashCode >> 48) & 1) * 2) - 1;
-            shingle[49] += ((int)((hashCode >> 49) & 1) * 2) - 1;
-            shingle[50] += ((int)((hashCode >> 50) & 1) * 2) - 1;
-            shingle[51] += ((int)((hashCode >> 51) & 1) * 2) - 1;
-            shingle[52] += ((int)((hashCode >> 52) & 1) * 2) - 1;
-            shingle[53] += ((int)((hashCode >> 53) & 1) * 2) - 1;
-            shingle[54] += ((int)((hashCode >> 54) & 1) * 2) - 1;
-            shingle[55] += ((int)((hashCode >> 55) & 1) * 2) - 1;
-            shingle[56] += ((int)((hashCode >> 56) & 1) * 2) - 1;
-            shingle[57] += ((int)((hashCode >> 57) & 1) * 2) - 1;
-            shingle[58] += ((int)((hashCode >> 58) & 1) * 2) - 1;
-            shingle[59] += ((int)((hashCode >> 59) & 1) * 2) - 1;
-            shingle[60] += ((int)((hashCode >> 60) & 1) * 2) - 1;
-            shingle[61] += ((int)((hashCode >> 61) & 1) * 2) - 1;
-            shingle[62] += ((int)((hashCode >> 62) & 1) * 2) - 1;
-            shingle[63] += ((int)((hashCode >> 63) & 1) * 2) - 1;
-        }
-
-        ulong simhash = 0L;
-        for (var i = 0; i < 64; i++)
-        {
-            if (shingle[i] > 0)
-            {
-                simhash |= 1UL << i;
-            }
-        }
-
-        return simhash;
-    }
-
-    public static ulong DoBitHackNonOverlapping()
-    {
-        Span<int> shingle = stackalloc int[64];
-        var span = StringHelper.AllSymbolsInput.AsSpan();
-
-        for (var i = 0; i < span.Length - 2; i += 3)
         {
             var slice = span.Slice(i, 3);
             var hashCode = ComputeFnv1aHash(slice);
@@ -311,80 +96,148 @@ public static class SimHashService
         return simhash;
     }
 
-    public static ulong DoUnrolled()
+    public static unsafe ulong DoUnsafe(string input)
     {
         Span<int> shingle = stackalloc int[64];
-        var span = StringHelper.AllSymbolsInput.AsSpan();
-
+        var span = input.AsSpan();
         for (var i = 0; i < span.Length - 2; i++)
         {
             var slice = span.Slice(i, 3);
             var hashCode = ComputeFnv1aHash(slice);
+            fixed (int* pShingle = shingle)
+            {
+                int* pCurrent = pShingle;
+                for (var j = 0; j < 64; j++)
+                {
+                    *pCurrent += ((int)((hashCode >> j) & 1) * 2) - 1;
+                    pCurrent++;
+                }
+            }
+        }
 
-            shingle[0] += ((hashCode & (1UL << 0)) != 0) ? 1 : -1;
-            shingle[1] += ((hashCode & (1UL << 1)) != 0) ? 1 : -1;
-            shingle[2] += ((hashCode & (1UL << 2)) != 0) ? 1 : -1;
-            shingle[3] += ((hashCode & (1UL << 3)) != 0) ? 1 : -1;
-            shingle[4] += ((hashCode & (1UL << 4)) != 0) ? 1 : -1;
-            shingle[5] += ((hashCode & (1UL << 5)) != 0) ? 1 : -1;
-            shingle[6] += ((hashCode & (1UL << 6)) != 0) ? 1 : -1;
-            shingle[7] += ((hashCode & (1UL << 7)) != 0) ? 1 : -1;
-            shingle[8] += ((hashCode & (1UL << 8)) != 0) ? 1 : -1;
-            shingle[9] += ((hashCode & (1UL << 9)) != 0) ? 1 : -1;
-            shingle[10] += ((hashCode & (1UL << 10)) != 0) ? 1 : -1;
-            shingle[11] += ((hashCode & (1UL << 11)) != 0) ? 1 : -1;
-            shingle[12] += ((hashCode & (1UL << 12)) != 0) ? 1 : -1;
-            shingle[13] += ((hashCode & (1UL << 13)) != 0) ? 1 : -1;
-            shingle[14] += ((hashCode & (1UL << 14)) != 0) ? 1 : -1;
-            shingle[15] += ((hashCode & (1UL << 15)) != 0) ? 1 : -1;
-            shingle[16] += ((hashCode & (1UL << 16)) != 0) ? 1 : -1;
-            shingle[17] += ((hashCode & (1UL << 17)) != 0) ? 1 : -1;
-            shingle[18] += ((hashCode & (1UL << 18)) != 0) ? 1 : -1;
-            shingle[19] += ((hashCode & (1UL << 19)) != 0) ? 1 : -1;
-            shingle[20] += ((hashCode & (1UL << 20)) != 0) ? 1 : -1;
-            shingle[21] += ((hashCode & (1UL << 21)) != 0) ? 1 : -1;
-            shingle[22] += ((hashCode & (1UL << 22)) != 0) ? 1 : -1;
-            shingle[23] += ((hashCode & (1UL << 23)) != 0) ? 1 : -1;
-            shingle[24] += ((hashCode & (1UL << 24)) != 0) ? 1 : -1;
-            shingle[25] += ((hashCode & (1UL << 25)) != 0) ? 1 : -1;
-            shingle[26] += ((hashCode & (1UL << 26)) != 0) ? 1 : -1;
-            shingle[27] += ((hashCode & (1UL << 27)) != 0) ? 1 : -1;
-            shingle[28] += ((hashCode & (1UL << 28)) != 0) ? 1 : -1;
-            shingle[29] += ((hashCode & (1UL << 29)) != 0) ? 1 : -1;
-            shingle[30] += ((hashCode & (1UL << 30)) != 0) ? 1 : -1;
-            shingle[31] += ((hashCode & (1UL << 31)) != 0) ? 1 : -1;
-            shingle[32] += ((hashCode & (1UL << 32)) != 0) ? 1 : -1;
-            shingle[33] += ((hashCode & (1UL << 33)) != 0) ? 1 : -1;
-            shingle[34] += ((hashCode & (1UL << 34)) != 0) ? 1 : -1;
-            shingle[35] += ((hashCode & (1UL << 35)) != 0) ? 1 : -1;
-            shingle[36] += ((hashCode & (1UL << 36)) != 0) ? 1 : -1;
-            shingle[37] += ((hashCode & (1UL << 37)) != 0) ? 1 : -1;
-            shingle[38] += ((hashCode & (1UL << 38)) != 0) ? 1 : -1;
-            shingle[39] += ((hashCode & (1UL << 39)) != 0) ? 1 : -1;
-            shingle[40] += ((hashCode & (1UL << 40)) != 0) ? 1 : -1;
-            shingle[41] += ((hashCode & (1UL << 41)) != 0) ? 1 : -1;
-            shingle[42] += ((hashCode & (1UL << 42)) != 0) ? 1 : -1;
-            shingle[43] += ((hashCode & (1UL << 43)) != 0) ? 1 : -1;
-            shingle[44] += ((hashCode & (1UL << 44)) != 0) ? 1 : -1;
-            shingle[45] += ((hashCode & (1UL << 45)) != 0) ? 1 : -1;
-            shingle[46] += ((hashCode & (1UL << 46)) != 0) ? 1 : -1;
-            shingle[47] += ((hashCode & (1UL << 47)) != 0) ? 1 : -1;
-            shingle[48] += ((hashCode & (1UL << 48)) != 0) ? 1 : -1;
-            shingle[49] += ((hashCode & (1UL << 49)) != 0) ? 1 : -1;
-            shingle[50] += ((hashCode & (1UL << 50)) != 0) ? 1 : -1;
-            shingle[51] += ((hashCode & (1UL << 51)) != 0) ? 1 : -1;
-            shingle[52] += ((hashCode & (1UL << 52)) != 0) ? 1 : -1;
-            shingle[53] += ((hashCode & (1UL << 53)) != 0) ? 1 : -1;
-            shingle[54] += ((hashCode & (1UL << 54)) != 0) ? 1 : -1;
-            shingle[55] += ((hashCode & (1UL << 55)) != 0) ? 1 : -1;
-            shingle[56] += ((hashCode & (1UL << 56)) != 0) ? 1 : -1;
-            shingle[57] += ((hashCode & (1UL << 57)) != 0) ? 1 : -1;
-            shingle[58] += ((hashCode & (1UL << 58)) != 0) ? 1 : -1;
-            shingle[59] += ((hashCode & (1UL << 59)) != 0) ? 1 : -1;
-            shingle[60] += ((hashCode & (1UL << 60)) != 0) ? 1 : -1;
-            shingle[61] += ((hashCode & (1UL << 61)) != 0) ? 1 : -1;
-            shingle[62] += ((hashCode & (1UL << 62)) != 0) ? 1 : -1;
-            shingle[63] += ((hashCode & (1UL << 63)) != 0) ? 1 : -1;
+        ulong simhash = 0L;
+        for (var i = 0; i < 64; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simhash |= 1UL << i;
+            }
+        }
+        return simhash;
+    }
+
+    public static unsafe ulong DoUnrolled(string input)
+    {
+        Span<int> shingle = stackalloc int[64];
+        var span = input.AsSpan();
+
+        fixed (int* pShingle = shingle)
+        {
+            for (var i = 0; i < span.Length - 2; i++)
+            {
+                var slice = span.Slice(i, 3);
+                var hashCode = ComputeFnv1aHash(slice);
+
+                int* pCurrent = pShingle;
+
+                *pCurrent += ((int)((hashCode >> 0) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 1) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 2) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 3) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 4) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 5) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 6) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 7) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 8) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 9) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 10) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 11) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 12) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 13) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 14) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 15) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 16) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 17) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 18) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 19) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 20) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 21) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 22) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 23) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 24) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 25) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 26) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 27) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 28) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 29) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 30) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 31) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 32) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 33) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 34) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 35) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 36) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 37) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 38) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 39) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 40) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 41) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 42) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 43) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 44) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 45) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 46) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 47) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 48) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 49) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 50) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 51) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 52) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 53) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 54) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 55) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 56) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 57) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 58) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 59) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 60) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 61) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 62) & 1) * 2) - 1; pCurrent++;
+                *pCurrent += ((int)((hashCode >> 63) & 1) * 2) - 1;
+            }
+        }
+
+        ulong simhash = 0L;
+        fixed (int* pShingle = shingle)
+        {
+            int* pCurrent = pShingle;
+            for (var i = 0; i < 64; i++)
+            {
+                if (*pCurrent > 0)
+                {
+                    simhash |= 1UL << i;
+                }
+                pCurrent++;
+            }
+        }
+
+        return simhash;
+    }
+
+    public static ulong DoBitHackNonOverlapping()
+    {
+        Span<int> shingle = stackalloc int[64];
+        var span = StringHelper.AllSymbolsInput.AsSpan();
+
+        for (var i = 0; i < span.Length - 2; i += 3)
+        {
+            var slice = span.Slice(i, 3);
+            var hashCode = ComputeFnv1aHash(slice);
+
+            for (var j = 0; j < 64; j++)
+            {
+                shingle[j] += ((int)((hashCode >> j) & 1) * 2) - 1;
+            }
         }
 
         ulong simhash = 0L;
@@ -796,5 +649,93 @@ public static class SimHashService
             }
         }
         return simhash;
+    }
+}
+
+public static class SimHashService2
+{
+    private const int HashSize = 64; // SimHash size in bits
+    private const ulong offsetBasis = 14695981039346656037;
+    private const ulong prime = 1099511628211;
+
+    public static ulong ComputeSimHashVector(string input)
+    {
+        Span<int> shingle = stackalloc int[HashSize];
+        var span = input.AsSpan();
+
+        int batchSize = Vector<int>.Count; 
+        var accumulators = new Vector<int>[batchSize];
+
+        for (int i = 0; i < span.Length - 2; i++)
+        {
+            var hashCode = ComputeFnv1aHash(span.Slice(i, 3));
+
+            for (int j = 0; j < batchSize; j++)
+            {
+                var bits = (hashCode >> (j * batchSize)) & ((1UL << batchSize) - 1);
+
+                Span<int> maskArray = stackalloc int[batchSize];
+                for (int k = 0; k < batchSize; k++)
+                {
+                    maskArray[k] = (int)((bits >> k) & 1);
+                }
+                var bitMask = new Vector<int>(maskArray);
+
+                var update = (bitMask * 2) - Vector<int>.One;
+
+                accumulators[j] += update;
+            }
+        }
+
+        for (int i = 0; i < batchSize; i++)
+        {
+            for (int j = 0; j < batchSize; j++)
+            {
+                var bitPos = (i * batchSize) + j;
+                if (bitPos < HashSize)
+                {
+                    shingle[bitPos] += accumulators[i][j];
+                }
+            }
+        }
+
+        ulong simHash = 0;
+        for (int i = 0; i < HashSize; i++)
+        {
+            if (shingle[i] > 0)
+            {
+                simHash |= 1UL << i;
+            }
+        }
+
+        return simHash;
+    }
+
+    private static ulong ComputeFnv1aHash(ReadOnlySpan<char> trigram)
+    {
+        var hash = offsetBasis;
+
+        hash ^= trigram[0];
+        hash *= prime;
+
+        hash ^= trigram[1];
+        hash *= prime;
+
+        hash ^= trigram[2];
+        hash *= prime;
+
+        return hash;
+    }
+
+    private static Vector<long> CreateMask(ulong hash)
+    {
+        long[] maskArray = new long[Vector<long>.Count];
+        for (int i = 0; i < HashSize; i++)
+        {
+            // Use the bit hack to calculate -1 or 1 for each bit
+            long value = ((long)((hash >> i) & 1UL) * 2L) - 1L;
+            maskArray[i / 64] |= value << (i % 64);
+        }
+        return new Vector<long>(maskArray);
     }
 }
